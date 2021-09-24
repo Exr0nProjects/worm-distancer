@@ -1,0 +1,175 @@
+<!doctype html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>worm finder</title>
+        <meta name="description" content="wormsss">
+        <meta name="author" content="Exr0n">
+
+        <meta property="og:title" content="worm finder">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="N/A">
+        <meta property="og:description" content="worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms">
+        <meta property="og:image" content="n/a">
+
+        <!--<link rel="icon" href="/favicon.ico">-->
+        <!--<link rel="icon" href="/favicon.svg" type="image/svg+xml">-->
+        <!--<link rel="apple-touch-icon" href="/apple-touch-icon.png">-->
+
+        <!--<link rel="stylesheet" href="css/styles.css?v=1.0">-->
+        <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    </head>
+
+    <body class="bg-gray-700 overflow-scroll">
+        <div class="fixed z-40 mt-0 p-8 w-1/6 ml-0 flex flex-col space-y-8">
+            <div class="font-mono text-4xl text-blue-200">left click to add a point<br>z or right click to undo<br>c to copy data to clipboard and continue</div>
+            <div><input class="text-5xl" id="input-file" type="file"></div>
+            <div><input class="w-3/5 h-36" id="jump-seconds" type="range" min="1" max="200" value="100"><span id="jump-seconds-display" class="p-12 text-6xl text-blue-200">shift</span></div>
+            <div id="input-time-stamp" class="p-4 border-2 border-black text-6xl text-blue-200" contenteditable>set frame time here</div>
+        </div>
+        <div class="relative">
+            <video id="video" class="absolute w-full" width="3584" height="2746" controls>
+                <source id="video-source" src="/Users/albhuan/Downloads/2021.9.22.AM725.TR1.mp4">
+            </video>
+            <svg id="clickbox" class="absolute w-full h-auto border-2 border-red-500" width="3584" height="2646" viewBox="0 0 3584 2646">
+                <path id="path-display" stroke-width="8" stroke="lime" style="fill: rgba(0, 0, 0, 0);"/>
+                <path id="path-display-onionskin" stroke-width="3" stroke="lime" style="fill: rgba(0, 0, 0, 0);"/>
+                <g id="generated-point-group"></g>
+                <g id="generated-skeletal-group"></g>
+            </svg>
+        </div>
+        <script>
+            const box = document.getElementById('clickbox');
+            const video = document.getElementById('video');
+
+            const input_file = document.getElementById('input-file');
+            const input_jumpsecs = document.getElementById('jump-seconds');
+            const input_curtime = document.getElementById('input-time-stamp');
+            const display_jumpsecs = document.getElementById('jump-seconds-display');
+            const path_display = document.getElementById('path-display');
+            const path_display_onion = document.getElementById('path-display-onionskin');
+            const generated_group = document.getElementById('generated-point-group');
+            const generated_skeletal_group = document.getElementById('generated-skeletal-group');
+
+            const video_source_tag = document.getElementById('video-source')
+
+            function createCircle(x, y, size=10, color="red") {
+                const circ = document.createElementNS('http://www.w3.org/2000/svg',"circle");
+                circ.setAttributeNS(null, 'cx', x);
+                circ.setAttributeNS(null, 'cy', y);
+                circ.setAttributeNS(null, 'r', size);
+                circ.setAttributeNS(null, 'fill', color);
+                return circ
+            }
+
+            function get_points(dom_path, segment_approx_length) {
+                const tot_len = dom_path.getTotalLength();
+                let points = [];
+                for (let consumed=0; consumed < tot_len; consumed += segment_approx_length) {
+                    points.push(dom_path.getPointAtLength(consumed));
+                }
+                points.push(dom_path.getPointAtLength(tot_len));
+                return points;
+            }
+
+
+            function generate_skeleton(draw = true) {
+                while (generated_skeletal_group.firstChild) generated_skeletal_group.removeChild(generated_skeletal_group.lastChild);
+                let got = get_points(path_display, 100 /* TODO: make adustable */);
+                if (!draw) return got;
+                for (let { x, y } of got) {
+                    generated_skeletal_group.appendChild(createCircle(x, y, undefined, 'orange'));
+                }
+            }
+            
+            // STATE
+            let created_points = { }
+            let editing_video_timestamp = false;
+
+            function update_frame() {
+                display_jumpsecs.innerHTML = parseInt(input_jumpsecs.value)/100.0;
+                if (! editing_video_timestamp) {
+                    input_curtime.innerHTML = video.currentTime;
+                }
+
+                // if a line has been drawn
+                if (typeof created_points[video.currentTime] === 'undefined') return;
+                if (created_points[video.currentTime]?.length < 1) return;
+                const lst = created_points[video.currentTime];
+                const path_string = `M ${lst[0].x} ${lst[0].y}` + lst.slice(1).map(p => `L ${p.x} ${p.y}`).join(" ");
+                path_display.setAttributeNS(null, "d", path_string);   
+                generate_skeleton();
+            }
+
+            function undo_prev_point() {
+                if (typeof created_points[video.currentTime] === 'undefined' || created_points[video.currentTime].length <= 0) return;
+                created_points[video.currentTime] = created_points[video.currentTime].slice(0, -1);
+                generated_group.removeChild(generated_group.lastChild);
+            }
+
+            function confirm_and_clear() {
+                            if (typeof created_points[video.currentTime] === "undefined" || created_points[video.currentTime].length < 2)  { alert("not enough points drawn!"); return; }
+                const gen_got = generate_skeleton(false).map(p => `${video.currentTime}, ${p.x}, ${p.y},`).join('\n');
+                navigator.clipboard.writeText(gen_got).then(() => {
+                    alert("copied point data to clipboard");
+                }).catch(() => {
+                    console.log(gen_got);
+                    alert("failed to copy to clipboard. wrote in the console instead. is this site being served over https?");
+                });
+
+                while (generated_group.firstChild) generated_group.removeChild(generated_group.lastChild);
+                path_display_onion.setAttributeNS(null, 'd', path_display.getAttribute('d'));
+                path_display.setAttributeNS(null, 'd', "");   
+                video.currentTime = parseFloat(video.currentTime) + parseFloat(input_jumpsecs.value)/100;
+            }
+
+            setInterval(update_frame, 100);
+            
+            input_file.addEventListener("input", e => {
+                console.log('loading file', e.target.files[0]);
+                video_source_tag.setAttribute('src', URL.createObjectURL(e.target.files[0]));
+                video.load();
+            });
+
+            box.addEventListener('mouseup', e => {
+                if (e.which != 1) return;
+                const pos_x = (e.clientX + window.pageXOffset)/box.clientWidth*3584;
+                const pos_y = (e.clientY + window.pageYOffset)/box.clientHeight*2646;
+                //console.log(`${video.currentTime}, ${pos_x}, ${pos_y}`);
+                if (typeof created_points[video.currentTime] === 'undefined') {
+                    created_points[video.currentTime] = [];
+                }
+                created_points[video.currentTime].push({ x: pos_x, y: pos_y });
+
+                generated_group.appendChild(createCircle(pos_x, pos_y, 15));
+            });
+
+            input_curtime.addEventListener('click', e => {
+                editing_video_timestamp = true;
+            });
+
+            document.addEventListener('contextmenu', function(ev) {
+                ev.preventDefault();
+                undo_prev_point();
+                return false;
+            }, false);
+
+            input_curtime.addEventListener('blur', e => {
+                let x = parseFloat(e.target.innerHTML);
+                if (x != x) 
+                    alert(`invalid decimal number! ${e.target.innerHTML}`);
+                else 
+                    video.currentTime = x;
+                editing_video_timestamp = false;
+            });
+            document.addEventListener('keyup', e => {
+                if (e.key == 'z') undo_prev_point();
+                if (e.key == 'c') confirm_and_clear();
+            });
+        </script>
+    </body>
+</html>
+
