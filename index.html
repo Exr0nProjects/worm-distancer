@@ -88,6 +88,7 @@
             // STATE
             let created_points = { }
             let editing_video_timestamp = false;
+            let current_file = "null";
 
             function update_frame() {
                 display_jumpsecs.innerHTML = parseInt(input_jumpsecs.value)/100.0;
@@ -112,13 +113,13 @@
 
             function confirm_and_clear() {
                             if (typeof created_points[video.currentTime] === "undefined" || created_points[video.currentTime].length < 2)  { alert("not enough points drawn!"); return; }
-                const gen_got = generate_skeleton(false).map(p => `${video.currentTime}, ${p.x}, ${p.y},`).join('\n');
+                const gen_got = generate_skeleton(false).map(p => `${current_file}, ${video.currentTime}, ${p.x}, ${p.y},`).join('\n');
                 navigator.clipboard.writeText(gen_got).then(() => {
                     alert("copied point data to clipboard");
                 }).catch(() => {
-                    console.log(gen_got);
                     alert("failed to copy to clipboard. wrote in the console instead. is this site being served over https?");
                 });
+                console.log(gen_got);
 
                 while (generated_group.firstChild) generated_group.removeChild(generated_group.lastChild);
                 path_display_onion.setAttributeNS(null, 'd', path_display.getAttribute('d'));
@@ -130,6 +131,7 @@
             
             input_file.addEventListener("input", e => {
                 console.log('loading file', e.target.files[0]);
+                current_file = e.target.files[0].name;
                 video_source_tag.setAttribute('src', URL.createObjectURL(e.target.files[0]));
                 video.load();
             });
