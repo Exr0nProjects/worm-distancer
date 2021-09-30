@@ -112,7 +112,7 @@
             }
 
             function confirm_and_clear() {
-                            if (typeof created_points[video.currentTime] === "undefined" || created_points[video.currentTime].length < 2)  { alert("not enough points drawn!"); return; }
+                if (typeof created_points[video.currentTime] === "undefined" || created_points[video.currentTime].length < 2)  { alert("not enough points drawn!"); return; }
                 const gen_got = generate_skeleton(false).map(p => `${current_file}, ${video.currentTime}, ${p.x}, ${p.y},`).join('\n');
                 navigator.clipboard.writeText(gen_got).then(() => {
                     alert("copied point data to clipboard");
@@ -122,9 +122,14 @@
                 console.log(gen_got);
 
                 while (generated_group.firstChild) generated_group.removeChild(generated_group.lastChild);
-                path_display_onion.setAttributeNS(null, 'd', path_display.getAttribute('d'));
-                path_display.setAttributeNS(null, 'd', "");   
+                path_display_onion.setAttributeNS(null, "d", path_display.getAttribute('d'));
+                path_display.setAttributeNS(null, "d", "");   
                 video.currentTime = parseFloat(video.currentTime) + parseFloat(input_jumpsecs.value)/100;
+            }
+
+            function nuke_data() {
+                confirm_and_clear();
+                created_points = {};
             }
 
             setInterval(update_frame, 100);
@@ -137,11 +142,11 @@
             });
 
             box.addEventListener('mouseup', e => {
-                if (e.which != 1) return;
+                if (e.which != 1 || editing_video_timestamp) return;
                 const pos_x = (e.clientX + window.pageXOffset)/box.clientWidth*3584;
                 const pos_y = (e.clientY + window.pageYOffset)/box.clientHeight*2646;
                 //console.log(`${video.currentTime}, ${pos_x}, ${pos_y}`);
-                if (typeof created_points[video.currentTime] === 'undefined') {
+                if (typeof created_points[video.currentTime] === "undefined") {
                     created_points[video.currentTime] = [];
                 }
                 created_points[video.currentTime].push({ x: pos_x, y: pos_y });
@@ -159,17 +164,25 @@
                 return false;
             }, false);
 
-            input_curtime.addEventListener('blur', e => {
-                let x = parseFloat(e.target.innerHTML);
+            function blur_timestamp(e) {
+                let x = parseFloat(e.target.innerHTML.replace(/(<([^>]+)>)/gi, ""));
                 if (x != x) 
                     alert(`invalid decimal number! ${e.target.innerHTML}`);
                 else 
                     video.currentTime = x;
                 editing_video_timestamp = false;
+                e.preventDefault();
+                return false;
+            }
+
+            input_curtime.addEventListener('blur', blur_timestamp);
+            input_curtime.addEventListener('keyup', e => {
+                if (e.key == "Enter") e.target.blur();
             });
             document.addEventListener('keyup', e => {
                 if (e.key == "z") undo_prev_point();
                 if (e.key == "c") confirm_and_clear();
+                if (e.key == "x") nuke_data();
             });
         </script>
     </body>
