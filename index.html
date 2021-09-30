@@ -9,26 +9,26 @@
         <meta name="description" content="wormsss">
         <meta name="author" content="Exr0n">
 
-        <meta property="og:title" content="worm finder">
+        <meta property="og:title" content="worms worms worms">
         <meta property="og:type" content="website">
         <meta property="og:url" content="N/A">
         <meta property="og:description" content="worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms worms">
         <meta property="og:image" content="n/a">
 
-        <!--<link rel="icon" href="/favicon.ico">-->
-        <!--<link rel="icon" href="/favicon.svg" type="image/svg+xml">-->
-        <!--<link rel="apple-touch-icon" href="/apple-touch-icon.png">-->
-
-        <!--<link rel="stylesheet" href="css/styles.css?v=1.0">-->
         <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     </head>
 
-    <body class="bg-gray-700 overflow-scroll">
-        <div class="fixed z-40 mt-0 p-8 w-1/6 ml-0 flex flex-col space-y-8">
-            <div class="font-mono text-4xl text-blue-200">left click to add a point<br>z or right click to undo<br>c to copy data to clipboard and continue<br>zoom way out (eg 25%) and choose a file to begin!</div>
+    <body class="bg-gray-700 overflow-scroll relative">
+        <div class="fixed z-40 mt-0 p-8 w-1/6 ml-0 flex text-6xl text-blue-200 flex-col space-y-8">
+            <div class="font-mono text-4xl text-blue-200">left click to add a point<br>z or right click to undo<br>c to copy data to clipboard and continue</div>
             <div><input class="text-5xl" id="input-file" type="file"></div>
-            <div><input class="w-3/5 h-36" id="jump-seconds" type="range" min="1" max="200" value="100"><span id="jump-seconds-display" class="p-12 text-6xl text-blue-200">shift</span></div>
-            <div id="input-time-stamp" class="p-4 border-2 border-black text-6xl text-blue-200" contenteditable>set frame time here</div>
+            <div>interval:<br><input class="w-3/5 h-24" id="jump-seconds" type="range" min="1" max="200" value="100"><div id="jump-seconds-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">shift</div></div>
+            <div>
+                timestamp: <div id="input-time-stamp" class="inline w-1/4 p-4 border-2 border-blue-200 text-6xl text-blue-200" contenteditable>set frame time here</div>
+            </div>
+        </div>
+        <div class="w-full fixed z-40">
+            <div id="saved-alert" class="w-1/6 bg-green-500 m-auto rounded-lg text-7xl text-white p-12 hidden text-center">saved to clipboard</div>
         </div>
         <div class="relative">
             <video id="video" class="absolute w-full" width="3584" height="2746" controls>
@@ -54,14 +54,15 @@
             const generated_group = document.getElementById('generated-point-group');
             const generated_skeletal_group = document.getElementById('generated-skeletal-group');
 
-            const video_source_tag = document.getElementById('video-source')
+            const video_source_tag = document.getElementById('video-source');
+            const saved_alert = document.getElementById('saved-alert');
 
             function createCircle(x, y, size=10, color="red") {
                 const circ = document.createElementNS('http://www.w3.org/2000/svg',"circle");
-                circ.setAttributeNS(null, 'cx', x);
-                circ.setAttributeNS(null, 'cy', y);
-                circ.setAttributeNS(null, 'r', size);
-                circ.setAttributeNS(null, 'fill', color);
+                circ.setAttributeNS(null, "cx", x);
+                circ.setAttributeNS(null, "cy", y);
+                circ.setAttributeNS(null, "r", size);
+                circ.setAttributeNS(null, "fill", color);
                 return circ
             }
 
@@ -78,7 +79,7 @@
 
             function generate_skeleton(draw = true) {
                 while (generated_skeletal_group.firstChild) generated_skeletal_group.removeChild(generated_skeletal_group.lastChild);
-                let got = get_points(path_display, 100 /* TODO: make adustable */);
+                let got = get_points(path_display, 100 /* TODO: make adjustable */);
                 if (!draw) return got;
                 for (let { x, y } of got) {
                     generated_skeletal_group.appendChild(createCircle(x, y, undefined, 'orange'));
@@ -86,9 +87,12 @@
             }
             
             // STATE
-            let created_points = { }
+            let created_points = { };
             let editing_video_timestamp = false;
             let current_file = "null";
+
+            // output
+            let frames_list = [];
 
             function update_frame() {
                 display_jumpsecs.innerHTML = parseInt(input_jumpsecs.value)/100.0;
@@ -97,7 +101,7 @@
                 }
 
                 // if a line has been drawn
-                if (typeof created_points[video.currentTime] === 'undefined') return;
+                if (typeof created_points[video.currentTime] === "undefined") return;
                 if (created_points[video.currentTime]?.length < 1) return;
                 const lst = created_points[video.currentTime];
                 const path_string = `M ${lst[0].x} ${lst[0].y}` + lst.slice(1).map(p => `L ${p.x} ${p.y}`).join(" ");
@@ -106,20 +110,33 @@
             }
 
             function undo_prev_point() {
-                if (typeof created_points[video.currentTime] === 'undefined' || created_points[video.currentTime].length <= 0) return;
+                if (typeof created_points[video.currentTime] === "undefined" || created_points[video.currentTime].length <= 0) return;
                 created_points[video.currentTime] = created_points[video.currentTime].slice(0, -1);
                 generated_group.removeChild(generated_group.lastChild);
             }
 
             function confirm_and_clear() {
                 if (typeof created_points[video.currentTime] === "undefined" || created_points[video.currentTime].length < 2)  { alert("not enough points drawn!"); return; }
-                const gen_got = generate_skeleton(false).map(p => `${current_file}, ${video.currentTime}, ${p.x}, ${p.y},`).join('\n');
-                navigator.clipboard.writeText(gen_got).then(() => {
-                    alert("copied point data to clipboard");
-                }).catch(() => {
+//<<<<<<< HEAD
+//                const gen_got = generate_skeleton(false).map(p => `${current_file}, ${video.currentTime}, ${p.x}, ${p.y},`).join('\n');
+//                navigator.clipboard.writeText(gen_got).then(() => {
+//                    alert("copied point data to clipboard");
+//                }).catch(() => {
+//=======
+                const skel = generate_skeleton(false);
+                const center = skel.slice(0, -1).reduce(([cx, cy], {x, y}) => ([cx+x, cy+y]), [0, 0]);
+                frames_list.push(`${current_file},${video.currentTime},${center[0]/(skel.length-1)},${center[1]/(skel.length-1)}`
+                                + skel.map(p => `${p.x},${p.y}`).join(','));
+                const output = "name,time,cx,cy,x1,y1,...,\n" + frames_list.join('\n');
+                navigator.clipboard.writeText(output).then(() => {
+                    saved_alert.style.display = "block";
+                    setTimeout(() => { saved_alert.style.display = "none"; }, 1000);
+                }).catch(e => {
+                    console.error(e);
+//>>>>>>> 5a6eff10aec1c69e180bfe97eed164d0f3354e5c
                     alert("failed to copy to clipboard. wrote in the console instead. is this site being served over https?");
                 });
-                console.log(gen_got);
+                console.log(output);
 
                 while (generated_group.firstChild) generated_group.removeChild(generated_group.lastChild);
                 path_display_onion.setAttributeNS(null, "d", path_display.getAttribute('d'));
@@ -133,10 +150,12 @@
             }
 
             setInterval(update_frame, 100);
+            alert("zoom way out (eg 25%) (with cmd + minus) and choose a file to begin!");
             
             input_file.addEventListener("input", e => {
                 console.log('loading file', e.target.files[0]);
                 current_file = e.target.files[0].name;
+                created_points = {};
                 video_source_tag.setAttribute('src', URL.createObjectURL(e.target.files[0]));
                 video.load();
             });
