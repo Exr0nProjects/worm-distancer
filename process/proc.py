@@ -21,6 +21,8 @@ if __name__ == '__main__':
     skeleton = skeleton/scale
     skeleton = skeleton.diff();
 
+    print(skeleton)
+
     metrics = ['sumabs', 'sumsquareabs', 'abssum'] + ['c' + str(i) for i in range(0, len(skeleton.columns)//2)]
 
     skels = pd.DataFrame(columns=metrics)
