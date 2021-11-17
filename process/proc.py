@@ -1,9 +1,11 @@
 import pandas as pd
-from math import sqrt
+from math import sqrt, atan2
 from itertools import islice
+from more_itertools import windowed
 
 # FILENAME = "worm_distances.tsv"
-FILENAME = "assay_test.tsv"
+# FILENAME = "assay_test.tsv"
+FILENAME = "angle_assay_test.tsv"
 scale = None
 
 while scale is None:
@@ -13,28 +15,38 @@ while scale is None:
     except ValueError:
         print("Invalid floating point number, try again.")
 
+def angle_to_center(cx, cy, ax, ay, bx, by):
+    # return '|'.join(str(int(x)) for x in [ cx, cy, ax, ay, bx, by ])  # check that the window is working properly
+    return atan2(ay-cy, ax-cx) - atan2(by-cy, bx-cx)
+
+def generate_angle_metrics(pos):
+    pos = pos[2:]
+    angles = [ angle_to_center(*points) for points in windowed(pos, n=6, step=2) ]
+    angles = [ 0 if x != x else x for x in angles ]
+    return pd.Series([sum(angles), sum(abs(a) for a in angles)] + angles,
+            index=['sum_angles', 'abs_angles'] + ['a' + str(i) for i in range(1, len(pos)//2-1)])
+
+def generate_pos_metrics(pos):
+    metrics = ['sumabs', 'sumsquareabs', 'abssum'] + ['c' + str(i) for i in range(0, len(pos)//2)]
+    deltax = pos[::2]
+    deltay = pos[1::2]
+    dists = [sqrt(x**2+y**2) for x, y in zip(deltax, deltay)]
+    sumabs = sum([abs(v) for v in dists[1:]])
+    sumsquareabs = sqrt(sum([v**2 for v in dists[1:]]))
+    abssum = abs(sum([v for v in dists[1:]]))
+    ret = [ sumabs, sumsquareabs, abssum ] + dists
+    return pd.Series(ret, index=metrics)
+
 if __name__ == '__main__':
     data = pd.read_csv(FILENAME, sep="	")
     data = data.set_index(['name', 'time'])
-
     skeleton = data/scale
 
-    # body_angles = calc_body_angles(skeleton)
+    body_angles = skeleton.apply(generate_angle_metrics, axis=1)
+
+    print(body_angles)
 
     delta_skel = skeleton.diff();
-
-    print(delta_skel)
-
-    metrics = ['sumabs', 'sumsquareabs', 'abssum'] + ['c' + str(i) for i in range(0, len(delta_skel.columns)//2)]
-    def generate_pos_metrics(pos):
-        deltax = pos[::2]
-        deltay = pos[1::2]
-        dists = [sqrt(x**2+y**2) for x, y in zip(deltax, deltay)]
-        sumabs = sum([abs(v) for v in dists[1:]])
-        sumsquareabs = sqrt(sum([v**2 for v in dists[1:]]))
-        abssum = abs(sum([v for v in dists[1:]]))
-        ret = [ sumabs, sumsquareabs, abssum ] + dists
-        return pd.Series(ret, index=metrics)
     pos_metrics = delta_skel.apply(generate_pos_metrics, axis=1)
 
     print(pos_metrics)
