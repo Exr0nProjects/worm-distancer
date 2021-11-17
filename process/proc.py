@@ -2,7 +2,8 @@ import pandas as pd
 from math import sqrt
 from itertools import islice
 
-FILENAME = "worm_distances.tsv"
+# FILENAME = "worm_distances.tsv"
+FILENAME = "assay_test.tsv"
 scale = None
 
 while scale is None:
@@ -14,26 +15,26 @@ while scale is None:
 
 if __name__ == '__main__':
     data = pd.read_csv(FILENAME, sep="	")
-    data = data.set_index('time')
+    data = data.set_index(['name', 'time'])
 
-    info = data.iloc[:,0:1]
-    skeleton = data.iloc[:,1:]
-    skeleton = skeleton/scale
-    skeleton = skeleton.diff();
+    skeleton = data/scale
 
-    print(skeleton)
+    # body_angles = calc_body_angles(skeleton)
 
-    metrics = ['sumabs', 'sumsquareabs', 'abssum'] + ['c' + str(i) for i in range(0, len(skeleton.columns)//2)]
+    delta_skel = skeleton.diff();
 
-    skels = pd.DataFrame(columns=metrics)
-    for idx, pos in islice(skeleton.iterrows(), 1, None):
+    print(delta_skel)
+
+    metrics = ['sumabs', 'sumsquareabs', 'abssum'] + ['c' + str(i) for i in range(0, len(delta_skel.columns)//2)]
+    def generate_pos_metrics(pos):
         deltax = pos[::2]
         deltay = pos[1::2]
         dists = [sqrt(x**2+y**2) for x, y in zip(deltax, deltay)]
         sumabs = sum([abs(v) for v in dists[1:]])
         sumsquareabs = sqrt(sum([v**2 for v in dists[1:]]))
         abssum = abs(sum([v for v in dists[1:]]))
-        to_app = { k: v for v, k in zip([sumabs, sumsquareabs, abssum] + dists, metrics) }
-        skels = skels.append(to_app, ignore_index=True)
+        ret = [ sumabs, sumsquareabs, abssum ] + dists
+        return pd.Series(ret, index=metrics)
+    pos_metrics = delta_skel.apply(generate_pos_metrics, axis=1)
 
-    print(skels)
+    print(pos_metrics)

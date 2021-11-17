@@ -118,7 +118,7 @@
             function confirm_and_clear() {
                 if (typeof created_points[video.currentTime] === "undefined" || created_points[video.currentTime].length < 2)  { alert("not enough points drawn!"); return; }
 //<<<<<<< HEAD
-//                const gen_got = generate_skeleton(false).map(p => `${current_file}, ${video.currentTime}, ${p.x}, ${p.y},`).join('\n');
+//                const gen_got = generate_skeleton(false).map(p => `${current_file}	${video.currentTime}	${p.x}	${p.y}	`).join('\n');
 //                navigator.clipboard.writeText(gen_got).then(() => {
 //                    alert("copied point data to clipboard");
 //                }).catch(() => {
