@@ -19,10 +19,11 @@
     </head>
 
     <body class="bg-gray-700 overflow-scroll relative">
-        <div class="fixed z-40 mt-0 p-8 w-1/6 ml-0 flex text-6xl text-blue-200 flex-col space-y-8">
+        <div class="fixed z-40 mt-0 p-8 w-2/6 ml-0 flex text-6xl text-blue-200 flex-col space-y-8">
             <div class="font-mono text-4xl text-blue-200">left click to add a point<br>z or right click to undo<br>c to copy data to clipboard and continue</div>
             <div><input class="text-5xl" id="input-file" type="file"></div>
-            <div>interval:<br><input class="w-3/5 h-24" id="jump-seconds" type="range" min="1" max="200" value="100"><div id="jump-seconds-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">shift</div></div>
+            <div>interval:<br><input class="w-3/5 h-24" id="jump-seconds" type="range" min="1" max="200" value="100"><div id="jump-seconds-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">jump seconds</div></div>
+            <div>skeletal distance:<br><input class="w-3/5 h-24" id="skeletal-distance" type="range" min="1" max="200" value="100"><div id="skeletal-distance-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">dist</div></div>
             <div>
                 timestamp: <div id="input-time-stamp" class="inline w-1/4 p-4 border-2 border-blue-200 text-6xl text-blue-200" contenteditable>set frame time here</div>
             </div>
@@ -47,8 +48,10 @@
 
             const input_file = document.getElementById('input-file');
             const input_jumpsecs = document.getElementById('jump-seconds');
+            const input_skeletal_distance = document.getElementById('skeletal-distance');
             const input_curtime = document.getElementById('input-time-stamp');
             const display_jumpsecs = document.getElementById('jump-seconds-display');
+            const display_skeldist = document.getElementById('skeletal-distance-display');
             const path_display = document.getElementById('path-display');
             const path_display_onion = document.getElementById('path-display-onionskin');
             const generated_group = document.getElementById('generated-point-group');
@@ -56,6 +59,15 @@
 
             const video_source_tag = document.getElementById('video-source');
             const saved_alert = document.getElementById('saved-alert');
+
+            let SEGMENT_APPROX_LENGTH = 100;
+            input_skeletal_distance.addEventListener('mousemove', e => {
+            if (e.buttons == 1) {
+                const value = Math.ceil(Math.pow(e.target.value/10, 2));
+                SEGMENT_APPROX_LENGTH = value;
+                display_skeldist.innerHTML = value;
+            }
+            });
 
             function createCircle(x, y, size=10, color="red") {
                 const circ = document.createElementNS('http://www.w3.org/2000/svg',"circle");
@@ -79,10 +91,11 @@
 
             function generate_skeleton(draw = true) {
                 while (generated_skeletal_group.firstChild) generated_skeletal_group.removeChild(generated_skeletal_group.lastChild);
-                let got = get_points(path_display, 100 /* TODO: make adjustable */);
+                let got = get_points(path_display, SEGMENT_APPROX_LENGTH);
                 if (!draw) return got;
                 for (let { x, y } of got) {
-                    generated_skeletal_group.appendChild(createCircle(x, y, undefined, 'orange'));
+                    generated_skeletal_group.appendChild(createCircle(x, y, Math.max(Math.min(SEGMENT_APPROX_LENGTH/3, 10), 2), 'orange'));
+                    //generated_skeletal_group.appendChild(createCircle(x, y, 5, 'orange'));
                 }
             }
             
@@ -106,6 +119,7 @@
                 const lst = created_points[video.currentTime];
                 const path_string = `M ${lst[0].x} ${lst[0].y}` + lst.slice(1).map(p => `L ${p.x} ${p.y}`).join(" ");
                 path_display.setAttributeNS(null, "d", path_string);   
+                path_display.setAttributeNS(null, "stroke-width", Math.max(Math.min(SEGMENT_APPROX_LENGTH/3, 8), 2))
                 generate_skeleton();
             }
 
@@ -170,7 +184,7 @@
                 }
                 created_points[video.currentTime].push({ x: pos_x, y: pos_y });
 
-                generated_group.appendChild(createCircle(pos_x, pos_y, 15));
+                generated_group.appendChild(createCircle(pos_x, pos_y, Math.max(Math.min(SEGMENT_APPROX_LENGTH/2, 15), 3)));
             });
 
             input_curtime.addEventListener('click', e => {

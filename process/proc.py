@@ -4,8 +4,8 @@ from itertools import islice
 from more_itertools import windowed
 
 # FILENAME = "worm_distances.tsv"
-# FILENAME = "assay_test.tsv"
-FILENAME = "angle_assay_test.tsv"
+FILENAME = "assay_test.tsv"
+# FILENAME = "angle_assay_test.tsv"
 scale = None
 
 while scale is None:
