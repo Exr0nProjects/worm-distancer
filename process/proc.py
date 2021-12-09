@@ -1,11 +1,12 @@
 import pandas as pd
-from math import sqrt, atan2
+from math import sqrt, atan2, pi
 from itertools import islice
 from more_itertools import windowed
 
 # FILENAME = "worm_distances.tsv"
-FILENAME = "assay_test.tsv"
+# FILENAME = "assay_test.tsv"
 # FILENAME = "angle_assay_test.tsv"
+FILENAME = "angle_test.tsv"
 scale = None
 
 while scale is None:
@@ -15,13 +16,15 @@ while scale is None:
     except ValueError:
         print("Invalid floating point number, try again.")
 
-def angle_to_center(cx, cy, ax, ay, bx, by):
+def angle_to_center(ax, ay, cx, cy, bx, by):
     # return '|'.join(str(int(x)) for x in [ cx, cy, ax, ay, bx, by ])  # check that the window is working properly
+    print(f"    calc angle {ax} {ay}   {bx} {by}   {cx} {cy}:  {atan2(ay-cy, ax-cx) / pi* 180} {atan2(by-cy, bx-cx) / pi * 180}")
     return atan2(ay-cy, ax-cx) - atan2(by-cy, bx-cx)
 
 def generate_angle_metrics(pos):
     pos = pos[2:]
-    angles = [ angle_to_center(*points) for points in windowed(pos, n=6, step=2) ]
+    angles = [ 180 + (angle_to_center(*points) * 180 / pi) for points in windowed(pos, n=6, step=2) ]
+    print('hewwwww', list(pos), list(angles))
     angles = [ 0 if x != x else x for x in angles ]
     return pd.Series([sum(angles), sum(abs(a) for a in angles)] + angles,
             index=['sum_angles', 'abs_angles'] + ['a' + str(i) for i in range(1, len(pos)//2-1)])
