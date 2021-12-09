@@ -18,13 +18,11 @@ while scale is None:
 
 def angle_to_center(ax, ay, cx, cy, bx, by):
     # return '|'.join(str(int(x)) for x in [ cx, cy, ax, ay, bx, by ])  # check that the window is working properly
-    print(f"    calc angle {ax} {ay}   {bx} {by}   {cx} {cy}:  {atan2(ay-cy, ax-cx) / pi* 180} {atan2(by-cy, bx-cx) / pi * 180}")
     return atan2(ay-cy, ax-cx) - atan2(by-cy, bx-cx)
 
 def generate_angle_metrics(pos):
     pos = pos[2:]
     angles = [ 180 + (angle_to_center(*points) * 180 / pi) for points in windowed(pos, n=6, step=2) ]
-    print('hewwwww', list(pos), list(angles))
     angles = [ 0 if x != x else x for x in angles ]
     return pd.Series([sum(angles), sum(abs(a) for a in angles)] + angles,
             index=['sum_angles', 'abs_angles'] + ['a' + str(i) for i in range(1, len(pos)//2-1)])
