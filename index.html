@@ -139,7 +139,7 @@
 //=======
                 const skel = generate_skeleton(false);
                 const center = skel.slice(0, -1).reduce(([cx, cy], {x, y}) => ([cx+x, cy+y]), [0, 0]);
-                frames_list.push(`${current_file},${video.currentTime},${center[0]/(skel.length-1)},${center[1]/(skel.length-1)},`
+                frames_list.push(`${current_file}	${video.currentTime}	${center[0]/(skel.length-1)}	${center[1]/(skel.length-1)}	`
                                 + skel.map(p => `${p.x}	${p.y}`).join("	"));
                 const output = "name	time	cx	cy	x1	y1	...	\n" + frames_list.join('\n');
                 navigator.clipboard.writeText(output).then(() => {
