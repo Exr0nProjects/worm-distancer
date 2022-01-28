@@ -22,7 +22,7 @@
         <div class="fixed z-40 mt-0 p-8 w-2/6 ml-0 flex text-6xl text-blue-200 flex-col space-y-8">
             <div class="font-mono text-4xl text-blue-200">left click to add a point<br>z or right click to undo<br>c to copy data to clipboard and continue</div>
             <div><input class="text-5xl" id="input-file" type="file"></div>
-            <div>interval:<br><input class="w-3/5 h-24" id="jump-seconds" type="range" min="1" max="1000" value="500"><div id="jump-seconds-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">jump seconds</div></div>
+            <div>interval:<br><input class="w-3/5 h-24" id="jump-seconds" type="number" value="70"><div id="jump-seconds-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">jump seconds</div></div>
             <div>skeletal distance:<br><input class="w-3/5 h-24" id="skeletal-distance" type="range" min="1" max="200" value="100"><div id="skeletal-distance-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">dist</div></div>
             <div>
                 timestamp: <div id="input-time-stamp" class="inline w-1/4 p-4 border-2 border-blue-200 text-6xl text-blue-200" contenteditable>set frame time here</div>
@@ -108,7 +108,7 @@
             let frames_list = [];
 
             function update_frame() {
-                display_jumpsecs.innerHTML = parseInt(input_jumpsecs.value)/100.0;
+                display_jumpsecs.innerHTML = parseFloat(input_jumpsecs.value);
                 if (! editing_video_timestamp) {
                     input_curtime.innerHTML = video.currentTime;
                 }
@@ -155,7 +155,7 @@
                 while (generated_group.firstChild) generated_group.removeChild(generated_group.lastChild);
                 path_display_onion.setAttributeNS(null, "d", path_display.getAttribute('d'));
                 path_display.setAttributeNS(null, "d", "");   
-                video.currentTime = parseFloat(video.currentTime) + parseFloat(input_jumpsecs.value)/100;
+                video.currentTime = parseFloat(video.currentTime) + parseFloat(input_jumpsecs.value);
             }
 
             function nuke_data() {
