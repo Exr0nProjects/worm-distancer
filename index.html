@@ -24,6 +24,8 @@
             <div><input class="text-5xl" id="input-file" type="file"></div>
             <div>interval:<br><input class="w-3/5 h-24" id="jump-seconds" type="number" value="70"><div id="jump-seconds-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">jump seconds</div></div>
             <div>skeletal distance:<br><input class="w-3/5 h-24" id="skeletal-distance" type="range" min="1" max="200" value="100"><div id="skeletal-distance-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">dist</div></div>
+            <div><input id="use-constant-subdivision-predicate" type="checkbox" checked></input> use constant number of points per worm</div>
+            <div><input id="skeletal-divisions" type="number" value="10"></input>points per worm</div>
             <div>
                 timestamp: <div id="input-time-stamp" class="inline w-1/4 p-4 border-2 border-blue-200 text-6xl text-blue-200" contenteditable>set frame time here</div>
             </div>
@@ -50,6 +52,8 @@
             const input_jumpsecs = document.getElementById('jump-seconds');
             const input_skeletal_distance = document.getElementById('skeletal-distance');
             const input_curtime = document.getElementById('input-time-stamp');
+            const input_subdivide_predicate = document.getElementById('use-constant-subdivision-predicate')
+            const input_skeletal_divisions = document.getElementById('skeletal-divisions')
             const display_jumpsecs = document.getElementById('jump-seconds-display');
             const display_skeldist = document.getElementById('skeletal-distance-display');
             const path_display = document.getElementById('path-display');
@@ -62,11 +66,11 @@
 
             let SEGMENT_APPROX_LENGTH = 100;
             input_skeletal_distance.addEventListener('mousemove', e => {
-            if (e.buttons == 1) {
-                const value = Math.ceil(Math.pow(e.target.value/10, 2));
-                SEGMENT_APPROX_LENGTH = value;
-                display_skeldist.innerHTML = value;
-            }
+                if (e.buttons == 1) {
+                    const value = Math.ceil(Math.pow(e.target.value/10, 2));
+                    SEGMENT_APPROX_LENGTH = value;
+                    display_skeldist.innerHTML = value;
+                }
             });
 
             function createCircle(x, y, size=10, color="red") {
@@ -91,7 +95,9 @@
 
             function generate_skeleton(draw = true) {
                 while (generated_skeletal_group.firstChild) generated_skeletal_group.removeChild(generated_skeletal_group.lastChild);
-                let got = get_points(path_display, SEGMENT_APPROX_LENGTH);
+
+
+                let got = get_points(path_display, input_subdivide_predicate.checked ? path_display.getTotalLength()/(parseInt(input_skeletal_divisions.value)-1) : SEGMENT_APPROX_LENGTH);
                 if (!draw) return got;
                 for (let { x, y } of got) {
                     generated_skeletal_group.appendChild(createCircle(x, y, Math.max(Math.min(SEGMENT_APPROX_LENGTH/3, 10), 2), 'orange'));
