@@ -22,12 +22,12 @@
         <div class="fixed z-40 mt-0 p-8 w-2/6 ml-0 flex text-6xl text-blue-200 flex-col space-y-8">
             <div class="font-mono text-4xl text-blue-200">left click to add a point<br>z or right click to undo<br>c to copy data to clipboard and continue</div>
             <div><input class="text-5xl" id="input-file" type="file"></div>
-            <div>interval:<br><input class="w-3/5 h-24" id="jump-seconds" type="number" value="70"><div id="jump-seconds-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">jump seconds</div></div>
+            <div>interval:<br><input class="w-3/5 h-24" onclick="this.select();" id="jump-seconds" type="number" value="70"><div id="jump-seconds-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">jump seconds</div></div>
             <div>skeletal distance:<br><input class="w-3/5 h-24" id="skeletal-distance" type="range" min="1" max="200" value="100"><div id="skeletal-distance-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">dist</div></div>
             <div><input id="use-constant-subdivision-predicate" type="checkbox" checked></input> use constant number of points per worm</div>
-            <div><input id="skeletal-divisions" type="number" value="10"></input>points per worm</div>
+            <div><input id="skeletal-divisions" onclick="this.select();" type="number" value="10"></input>points per worm</div>
             <div>
-                timestamp: <div id="input-time-stamp" class="inline w-1/4 p-4 border-2 border-blue-200 text-6xl text-blue-200" contenteditable>set frame time here</div>
+                timestamp: <input type="number" id="input-time-stamp" onclick="this.select();" class="inline w-1/4 p-4 border-2 border-blue-200 text-6xl text-blue-200"></input>
             </div>
         </div>
         <div class="w-full fixed z-40">
@@ -116,7 +116,7 @@
             function update_frame() {
                 display_jumpsecs.innerHTML = parseFloat(input_jumpsecs.value);
                 if (! editing_video_timestamp) {
-                    input_curtime.innerHTML = video.currentTime;
+                    input_curtime.value = video.currentTime;
                 }
 
                 // if a line has been drawn
@@ -204,9 +204,10 @@
             }, false);
 
             function blur_timestamp(e) {
-                let x = parseFloat(e.target.innerHTML.replace(/(<([^>]+)>)/gi, ""));
+                //let x = parseFloat(e.target.value.replace(/(<([^>]+)>)/gi, ""));
+                let x = parseFloat(e.target.value);
                 if (x != x) 
-                    alert(`invalid decimal number! ${e.target.innerHTML}`);
+                    alert(`invalid decimal number! ${e.target.value}`);
                 else 
                     video.currentTime = x;
                 editing_video_timestamp = false;
