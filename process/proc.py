@@ -3,11 +3,14 @@ from math import sqrt, atan2, pi
 from itertools import islice
 from more_itertools import windowed
 
+from sys import argv
+
 # FILENAME = "worm_distances.tsv"
 # FILENAME = "assay_test.tsv"
 # FILENAME = "angle_assay_test.tsv"
-FILENAME = "angle_test.tsv"
-scale = None
+# FILENAME = "angle_test.tsv"
+FILENAME = "input.tsv"
+scale = float(argv[1]) if len(argv) > 1 else None
 
 while scale is None:
     # TODO: make this a feature in the distancer
@@ -21,24 +24,28 @@ def angle_to_center(ax, ay, cx, cy, bx, by):
     return atan2(ay-cy, ax-cx) - atan2(by-cy, bx-cx)
 
 def generate_angle_metrics(pos):
-    pos = pos[2:]
+    pos = pos[2:]   # remove centroid points
+    # print('pos after rem', pos, list(windowed([int(x) for x in pos], n=6, step=2)))
     angles = [ 180 + (angle_to_center(*points) * 180 / pi) for points in windowed(pos, n=6, step=2) ]
     angles = [ 0 if x != x else x for x in angles ]
     return pd.Series([sum(angles), sum(abs(a) for a in angles)] + angles,
             index=['sum_angles', 'abs_angles'] + ['a' + str(i) for i in range(1, len(pos)//2-1)])
 
 def generate_pos_metrics(pos):
-    metrics = ['sumabs', 'sumsquareabs', 'abssum'] + ['c' + str(i) for i in range(0, len(pos)//2)]
+    metrics = ['sumabs', 'sumsquareabs', 'abssum', 'heading'] + ['v' + str(i) for i in range(0, len(pos)//2)]
     deltax = pos[::2]
     deltay = pos[1::2]
     dists = [sqrt(x**2+y**2) for x, y in zip(deltax, deltay)]
+    heading = [atan2(y, x) for x, y in zip(deltax, deltay)][0]/pi*180
     sumabs = sum([abs(v) for v in dists[1:]])
     sumsquareabs = sqrt(sum([v**2 for v in dists[1:]]))
     abssum = abs(sum([v for v in dists[1:]]))
-    ret = [ sumabs, sumsquareabs, abssum ] + dists
+    ret = [ sumabs, sumsquareabs, abssum, heading ] + dists
     return pd.Series(ret, index=metrics)
 
 if __name__ == '__main__':
+    pd.options.display.float_format = "{:.2f}".format
+
     data = pd.read_csv(FILENAME, sep="	")
     data = data.set_index(['name', 'time'])
     skeleton = data/scale
@@ -51,3 +58,7 @@ if __name__ == '__main__':
     pos_metrics = delta_skel.apply(generate_pos_metrics, axis=1)
 
     print(pos_metrics)
+
+    export = body_angles[['sum_angles', 'abs_angles']].merge(pos_metrics[['heading', 'v0']], left_index=True, right_index=True)
+    export.to_csv('output.tsv', sep='	')
+    print("see output.tsv for output")
