@@ -19,7 +19,23 @@
     </head>
 
     <body class="bg-gray-700 overflow-scroll relative">
-        <div class="fixed z-40 mt-0 p-8 w-2/6 ml-0 flex text-6xl text-blue-200 flex-col space-y-8">
+        <div class="w-full fixed z-40">
+            <div id="saved-alert" class="w-1/6 bg-green-500 m-auto rounded-lg text-7xl text-white p-12 hidden text-center">saved to clipboard</div>
+        </div>
+        <div >
+            <video id="video" class="w-full" width="3584" height="2746" controls>
+                <source id="video-source" src="emacs">
+            </video>
+            <svg id="clickbox" class="absolute top-0 mt-0 w-full h-auto cursor-none" style="border: 1px solid red;" width="3584" height="2646" viewBox="0 0 3584 2646">
+                <path id="path-display" stroke-width="8" stroke="lime" style="fill: rgba(0, 0, 0, 0);"/>
+                <path id="path-display-onionskin" stroke-width="3" stroke="lime" style="fill: rgba(0, 0, 0, 0);"/>
+                <g id="generated-point-group"></g>
+                <g id="generated-skeletal-group"></g>
+            </svg>
+        </div>
+        <div class="z-40" style="fixed">
+            <div style="height: 2000px"></div>
+        <div class="z-40 p-8 w-2/6 ml-0 flex text-6xl text-blue-200 flex-col space-y-8">
             <div class="font-mono text-4xl text-blue-200">left click to add a point<br>z or right click to undo<br>c to copy data to clipboard and continue</div>
             <div><input class="text-5xl" id="input-file" type="file"></div>
             <div>interval:<br><input class="w-3/5 h-24" onclick="this.select();" id="jump-seconds" type="number" value="1"><div id="jump-seconds-display" class="inline h-full text-center align-top p-12 text-6xl text-blue-200">jump seconds</div></div>
@@ -30,19 +46,6 @@
                 timestamp: <input type="number" id="input-time-stamp" onclick="this.select();" class="inline w-1/4 p-4 border-2 border-blue-200 text-6xl text-blue-200"></input>
             </div>
         </div>
-        <div class="w-full fixed z-40">
-            <div id="saved-alert" class="w-1/6 bg-green-500 m-auto rounded-lg text-7xl text-white p-12 hidden text-center">saved to clipboard</div>
-        </div>
-        <div class="relative">
-            <video id="video" class="absolute w-full" width="3584" height="2746" controls>
-                <source id="video-source" src="emacs">
-            </video>
-            <svg id="clickbox" class="absolute w-full h-auto border-2 border-red-500" width="3584" height="2646" viewBox="0 0 3584 2646">
-                <path id="path-display" stroke-width="8" stroke="lime" style="fill: rgba(0, 0, 0, 0);"/>
-                <path id="path-display-onionskin" stroke-width="3" stroke="lime" style="fill: rgba(0, 0, 0, 0);"/>
-                <g id="generated-point-group"></g>
-                <g id="generated-skeletal-group"></g>
-            </svg>
         </div>
         <script>
             const box = document.getElementById('clickbox');
