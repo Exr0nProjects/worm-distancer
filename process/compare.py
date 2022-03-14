@@ -1,11 +1,46 @@
 import pandas as pd
+import numpy as np
+from numpy import exp, log
 from matplotlib import pyplot as plt
+
 
 filenames = ['j.tsv', 'm.tsv']
 # filenames = ['2022_L1_training/' + name for name in ['Peter', 'Stephanie', 'Leilani', 'Zander']]
 
 cmaps = ['Blues', 'Greens', 'Reds']*4
-cmaps = ['summer', 'cool', 'winter']*4
+# cmaps = ['summer', 'cool', 'winter']*4
+
+def hsv_cmap(num_steps, h, s, modulate_opacity=False):
+    from matplotlib.colors import ListedColormap
+    from colorsys import hsv_to_rgb
+    return ListedColormap(np.array([[
+        *hsv_to_rgb(h, s, i),
+        i if modulate_opacity else 1
+    # ] for i in np.linspace(0, 1, num_steps)]))
+    # ] for i in np.logspace(-4, 0, num=num_steps, endpoint=True, base=1.3)]))
+    # ] for i in np.logspace(-1.9, 0, num=num_steps, endpoint=True, base=1.8)]))
+    ] for i in np.logspace(-1.4, 0, num=num_steps, endpoint=True, base=2)]))
+
+def plot_examples(colormaps):
+    """
+    Helper function to plot data with associated colormap.
+    """
+    np.random.seed(19680801)
+    data = np.random.randn(30, 30)
+    n = len(colormaps)
+    fig, axs = plt.subplots(1, n, figsize=(n * 2 + 2, 3),
+                            constrained_layout=True, squeeze=False)
+    for [ax, cmap] in zip(axs.flat, colormaps):
+        psm = ax.pcolormesh(data, cmap=cmap, rasterized=True, vmin=-4, vmax=4)
+        fig.colorbar(psm, ax=ax)
+    plt.show()
+
+from matplotlib.cm import get_cmap
+# print(get_cmap('viridis', 10).colors)
+# custom = hsv_cmap(10, 0.8, 0.7)
+custom = hsv_cmap(10, 0.8, 0.7)
+print(custom.colors)
+plot_examples([ get_cmap('viridis', 100), custom ])
 
 contrast_colors = [ (230, 25, 75), (60, 180, 75), (255, 225, 25), (0, 130, 200), (245, 130, 48), (145, 30, 180), (70, 240, 240), (240, 50, 230), (210, 245, 60), (250, 190, 212), (0, 128, 128), (220, 190, 255), (170, 110, 40), (255, 250, 200), (128, 0, 0), (170, 255, 195), (128, 128, 0), (255, 215, 180), (0, 0, 128), (128, 128, 128) ] # https://sashamaps.net/docs/resources/20-colors/
 
