@@ -30,18 +30,21 @@ def plot_all_3d(filenames):
     dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
     # 3d plotting from https://jakevdp.github.io/PythonDataScienceHandbook/04.12-three-dimensional-plotting.html
     ax = plt.axes(projection='3d')
-    cmaps = ['Greys', 'Purples', 'Blues', 'Greens', 'Reds']*2
+    cmaps = ['Purples', 'Blues', 'Greens', 'Reds']*2
     for (labeller, df), cmap in zip(dfs, cmaps):
         # print(labeller, '\n', df)
         for t, row in df.iterrows():
-            print(row)
-            row = list(row)
-            ydata = row[3:][:][::2]
-            zdata = row[4:][:][::2]
-            print(len(ydata), len(zdata))
-            print(ydata)
-            print(zdata)
-            print('\n\n')
+            # print(row)
+            ydata = row[4::2]
+            zdata = row[5::2]
+            # ydata = list(row[:])
+            # zdata = list(row[:])
+            # ydata = ydata[4::2]
+            # zdata = zdata[5::2]
+            print(labeller, t, '(lens):', len(ydata), len(zdata))
+            # print(ydata)
+            # print(zdata)
+            # print('\n\n')
             xdata = [t] * len(ydata)
             ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap=cmap)
             # print(t, row[3:])
