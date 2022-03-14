@@ -26,7 +26,7 @@ def plot_all_2d(filenames):
     plt.show()
 
 
-def plot_all_3d(filenames):
+def plot_3d_by_labeller(filenames):
     dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
     # 3d plotting from https://jakevdp.github.io/PythonDataScienceHandbook/04.12-three-dimensional-plotting.html
     ax = plt.axes(projection='3d')
@@ -34,24 +34,35 @@ def plot_all_3d(filenames):
     for (labeller, df), cmap in zip(dfs, cmaps):
         # print(labeller, '\n', df)
         for t, row in df.iterrows():
-            # print(row)
             ydata = row[4::2]
             zdata = row[5::2]
-            # ydata = list(row[:])
-            # zdata = list(row[:])
-            # ydata = ydata[4::2]
-            # zdata = zdata[5::2]
-            print(labeller, t, '(lens):', len(ydata), len(zdata))
-            # print(ydata)
-            # print(zdata)
-            # print('\n\n')
             xdata = [t] * len(ydata)
+            print(labeller, t, f'(color={cmap}) (lens)', len(ydata), len(zdata))
             ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap=cmap)
-            # print(t, row[3:])
+    plt.show()
+
+def plot_3d_by_point(filenames):
+    dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
+    ax = plt.axes(projection='3d')
+    cmaps = ['Purples', 'Blues', 'Greens', 'Reds']*2
+
+    dfs = pd.concat([df for _, df in dfs], keys=[n for n, _ in dfs], axis=0)
+    print(dfs)
+    for df in dfs.iterrows():
+        print(df)
+    print('\n\n')
+
+    for (labeller, df), cmap in zip(dfs, cmaps):
+        for t, row in df.iterrows():
+            ydata = row[4::2]
+            zdata = row[5::2]
+            xdata = [t] * len(ydata)
+            print(labeller, t, f'(color={cmap}) (lens)', len(ydata), len(zdata))
+            ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap=cmap)
     plt.show()
 
 if __name__ == '__main__':
     # plot_all_2d(filenames)
 
-    plot_all_3d(filenames)
+    plot_3d_by_point(filenames)
 
