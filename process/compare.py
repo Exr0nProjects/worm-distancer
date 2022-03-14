@@ -4,6 +4,9 @@ from matplotlib import pyplot as plt
 filenames = ['j.tsv', 'm.tsv']
 # filenames = ['2022_L1_training/' + name for name in ['Peter', 'Stephanie', 'Leilani', 'Zander']]
 
+cmaps = ['Blues', 'Greens', 'Reds']*4
+cmaps = ['summer', 'cool', 'winter']*4
+
 contrast_colors = [ (230, 25, 75), (60, 180, 75), (255, 225, 25), (0, 130, 200), (245, 130, 48), (145, 30, 180), (70, 240, 240), (240, 50, 230), (210, 245, 60), (250, 190, 212), (0, 128, 128), (220, 190, 255), (170, 110, 40), (255, 250, 200), (128, 0, 0), (170, 255, 195), (128, 128, 0), (255, 215, 180), (0, 0, 128), (128, 128, 128) ] # https://sashamaps.net/docs/resources/20-colors/
 
 def plot_skeleton_2d(ax, df, label):
@@ -26,34 +29,27 @@ def plot_all_2d(filenames):
     plt.show()
 
 
-def plot_3d_by_labeller(filenames):
-    dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
-    # 3d plotting from https://jakevdp.github.io/PythonDataScienceHandbook/04.12-three-dimensional-plotting.html
-    ax = plt.axes(projection='3d')
-    cmaps = ['Purples', 'Blues', 'Greens', 'Reds']*2
-    for (labeller, df), cmap in zip(dfs, cmaps):
-        # print(labeller, '\n', df)
-        for t, row in df.iterrows():
-            ydata = row[4::2]
-            zdata = row[5::2]
-            xdata = [t] * len(ydata)
-            print(labeller, t, f'(color={cmap}) (lens)', len(ydata), len(zdata))
-            ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap=cmap)
-    plt.show()
+# def plot_3d_by_labeller(filenames):
+#     dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
+#     # 3d plotting from https://jakevdp.github.io/PythonDataScienceHandbook/04.12-three-dimensional-plotting.html
+#     ax = plt.axes(projection='3d')
+#     cmaps = ['Blues', 'Greens', 'Reds']*2
+#     for (labeller, df), cmap in zip(dfs, cmaps):
+#         # print(labeller, '\n', df)
+#         for t, row in df.iterrows():
+#             ydata = row[4::2]
+#             zdata = row[5::2]
+#             xdata = [t] * len(ydata)
+#             print(labeller, t, f'(color={cmap}) (lens)', len(ydata), len(zdata))
+#             ax.scatter3D(xdata, ydata, zdata, s=500, c=zdata, cmap=cmap)
+#     plt.show()
 
 def plot_3d_by_point(filenames):
     dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
     ax = plt.axes(projection='3d')
-    cmaps = ['Purples', 'Blues', 'Greens', 'Reds']*2
 
-    dfs = pd.concat([df for _, df in dfs], keys=[n for n, _ in dfs], axis=0)
-    print(dfs)
-    for df in dfs.iterrows():
-        print(df)
-    print('\n\n')
-
-    for (labeller, df), cmap in zip(dfs, cmaps):
-        for t, row in df.iterrows():
+    for labeller, df in dfs:
+        for (t, row), cmap in zip(df.iterrows(), cmaps):
             ydata = row[4::2]
             zdata = row[5::2]
             xdata = [t] * len(ydata)
