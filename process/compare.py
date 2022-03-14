@@ -5,10 +5,7 @@ from matplotlib import pyplot as plt
 
 
 filenames = ['j.tsv', 'm.tsv']
-# filenames = ['2022_L1_training/' + name for name in ['Peter', 'Stephanie', 'Leilani', 'Zander']]
-
-cmaps = ['Blues', 'Greens', 'Reds']*4
-# cmaps = ['summer', 'cool', 'winter']*4
+filenames = ['2022_L1_training/' + name + '.tsv' for name in ['Peter', 'Stephanie', 'Zander']]
 
 def hsv_cmap(num_steps, h, s, modulate_opacity=False):
     from matplotlib.colors import ListedColormap
@@ -19,28 +16,12 @@ def hsv_cmap(num_steps, h, s, modulate_opacity=False):
     # ] for i in np.linspace(0, 1, num_steps)]))
     # ] for i in np.logspace(-4, 0, num=num_steps, endpoint=True, base=1.3)]))
     # ] for i in np.logspace(-1.9, 0, num=num_steps, endpoint=True, base=1.8)]))
-    ] for i in np.logspace(-1.4, 0, num=num_steps, endpoint=True, base=2)]))
+    ] for i in np.logspace(-1, 0, num=num_steps, endpoint=True, base=2)]),
+    name=f"hsv_cmap({h}, {s}, {modulate_opacity})")
 
-def plot_examples(colormaps):
-    """
-    Helper function to plot data with associated colormap.
-    """
-    np.random.seed(19680801)
-    data = np.random.randn(30, 30)
-    n = len(colormaps)
-    fig, axs = plt.subplots(1, n, figsize=(n * 2 + 2, 3),
-                            constrained_layout=True, squeeze=False)
-    for [ax, cmap] in zip(axs.flat, colormaps):
-        psm = ax.pcolormesh(data, cmap=cmap, rasterized=True, vmin=-4, vmax=4)
-        fig.colorbar(psm, ax=ax)
-    plt.show()
-
-from matplotlib.cm import get_cmap
-# print(get_cmap('viridis', 10).colors)
-# custom = hsv_cmap(10, 0.8, 0.7)
-custom = hsv_cmap(10, 0.8, 0.7)
-print(custom.colors)
-plot_examples([ get_cmap('viridis', 100), custom ])
+# cmaps = ['Blues', 'Greens', 'Reds']*4
+# cmaps = ['summer', 'cool', 'winter']*4
+cmaps = [hsv_cmap(256, x, 0.7) for x in np.linspace(0.4, 0.9, 4)] * 2
 
 contrast_colors = [ (230, 25, 75), (60, 180, 75), (255, 225, 25), (0, 130, 200), (245, 130, 48), (145, 30, 180), (70, 240, 240), (240, 50, 230), (210, 245, 60), (250, 190, 212), (0, 128, 128), (220, 190, 255), (170, 110, 40), (255, 250, 200), (128, 0, 0), (170, 255, 195), (128, 128, 0), (255, 215, 180), (0, 0, 128), (128, 128, 128) ] # https://sashamaps.net/docs/resources/20-colors/
 
@@ -83,14 +64,49 @@ def plot_3d_by_point(filenames):
     dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
     ax = plt.axes(projection='3d')
 
+    scatters = []
     for labeller, df in dfs:
         for (t, row), cmap in zip(df.iterrows(), cmaps):
             ydata = row[4::2]
             zdata = row[5::2]
             xdata = [t] * len(ydata)
             print(labeller, t, f'(color={cmap}) (lens)', len(ydata), len(zdata))
-            ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap=cmap)
+            scatters.append((labeller, ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap=cmap, label=labeller)))
+
+    # create tooltips (https://towardsdatascience.com/tooltips-with-pythons-matplotlib-dcd8db758846)
+    annot = ax.annotate("", xy=(0,0), xytext=(5,5),textcoords="offset points")
+
+    class TooltipManager:
+        def __init__(self, scatters, tooltip):
+            self.scatters = scatters
+            self.tooltip = tooltip
+            self.last_tip = ""
+
+        def handle_hover(self, event):
+            labels = set()
+            for label, sc in self.scatters:
+                cont, _ = sc.contains(event)
+                if cont:
+                    labels.add(label)
+
+            if len(labels):
+                self.tooltip.xy = (event.xdata, event.ydata)
+                label_text = f"{', '.join(n for n in labels)}"
+                # annot.set_visible(True)
+            else:
+                label_text = ""
+                # annot.set_visible(False)
+
+            if self.last_tip != label_text:
+                annot.set_text(label_text)
+                plt.gcf().canvas.draw()
+                self.last_tip = label_text
+
+    tooltip_mgr = TooltipManager(scatters, annot)
+    plt.gcf().canvas.mpl_connect("motion_notify_event", tooltip_mgr.handle_hover)
+
     plt.show()
+
 
 if __name__ == '__main__':
     # plot_all_2d(filenames)
