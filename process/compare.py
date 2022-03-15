@@ -3,6 +3,7 @@ import numpy as np
 from numpy import exp, log
 from matplotlib import pyplot as plt
 
+from radio_beam.commonbeam import getMinVolEllipse # the only legit-seeming impl of Khachiyan algorithm I can find
 
 filenames = ['j.tsv', 'm.tsv']
 filenames = ['2022_L1_training/' + name + '.tsv' for name in ['Peter', 'Stephanie', 'Zander']]
@@ -35,6 +36,22 @@ def plot_skeleton_2d(ax, df, label):
         posy = pos[1::2]
         print(posx, end='\n\n')
         ax.scatter(posx, posy, label=label)
+        # fit ellipse
+        # P = np.array([posx, posy], dtype='float64').T
+        P = np.array([[1607.694214, 1607.694214],
+              [1591.505249, 1591.505248],
+              [1616.366943, 1616.366943],
+              [1652.560547, 1652.560547],
+              [1678.506226, 1678.506226],
+              [1681.567383, 1681.567383],
+              [1664.015625, 1664.015625],
+              [1653.77063 , 1653.770631],
+              [1664.348633, 1664.348633],
+              [1696.733887, 1696.733887]])
+        print(P)
+        center, radii, rotation = getMinVolEllipse(P)
+        print(center, radii, rotation)
+        break
 
 def plot_all_2d(filenames):
     dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
@@ -42,6 +59,7 @@ def plot_all_2d(filenames):
     fig, axs = plt.subplots(1, len(dfs[0]))
     for (name, df), ax in zip(dfs, axs):
         plot_skeleton_2d(ax, df, name)
+        break
     plt.show()
 
 
@@ -109,7 +127,7 @@ def plot_3d_by_point(filenames):
 
 
 if __name__ == '__main__':
-    # plot_all_2d(filenames)
+    plot_all_2d(filenames)
 
-    plot_3d_by_point(filenames)
+    # plot_3d_by_point(filenames)
 
