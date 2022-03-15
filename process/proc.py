@@ -29,11 +29,22 @@ def generate_angle_metrics(pos):
     # print('pos after rem', pos, list(windowed([int(x) for x in pos], n=6, step=2)))
     angles = [ 180 + (angle_to_center(*points) * 180 / pi) for points in windowed(pos, n=6, step=2) ]
     angles = [ 0 if x != x else x for x in angles ]
-    return pd.Series([sum(angles), sum(abs(a) for a in angles)] + angles,
-            index=['sum_angles', 'abs_angles'] + ['a' + str(i) for i in range(1, len(pos)//2-1)])
+    center, radii, rotation = bounding_ellipse(np.reshape(list(pos), (len(pos)//2, 2)))
+    data = {
+        'sum_angles': sum(angles),
+        'abs_angles': sum(abs(a) for a in angles),
+        'ellipse_cx': center[0],
+        'ellipse_cy': center[1],
+        'ellipse_area': pi * radii[0] * radii[1],
+        'ellipse_angle': rotation,
+        'ellipse_ecentricity': sqrt(1-min(radii[0], radii[1])/max(radii[0], radii[1]))
+    }
+    return pd.Series(list(data.values()) + angles,
+            index=list(data.keys()) + ['a' + str(i) for i in range(1, len(pos)//2-1)])
 
 def generate_pos_metrics(pos):
-    metrics = ['sumabs', 'sumsquareabs', 'abssum', 'heading'] + ['v' + str(i) for i in range(0, len(pos)//2)]
+    metrics = ['sumabs', 'sumsquareabs', 'abssum', 'heading']\
+            + ['v' + str(i) for i in range(0, len(pos)//2)]
     deltax = pos[::2]
     deltay = pos[1::2]
     dists = [sqrt(x**2+y**2) for x, y in zip(deltax, deltay)]
@@ -43,6 +54,18 @@ def generate_pos_metrics(pos):
     abssum = abs(sum([v for v in dists[1:]]))
     ret = [ sumabs, sumsquareabs, abssum, heading ] + dists
     return pd.Series(ret, index=metrics)
+
+def proc(filename, scale):
+    data = pd.read_csv(filename, sep="	")
+    data = data.set_index(['name', 'time'])
+    skeleton = data/scale
+
+    body_angles = skeleton.apply(generate_angle_metrics, axis=1)
+
+    delta_skel = skeleton.diff();
+    pos_metrics = delta_skel.apply(generate_pos_metrics, axis=1)
+
+    return body_angles[['sum_angles', 'abs_angles']].merge(pos_metrics[['heading', 'v0']], left_index=True, right_index=True)
 
 if __name__ == '__main__':
 
@@ -56,19 +79,6 @@ if __name__ == '__main__':
 
     pd.options.display.float_format = "{:.2f}".format
 
-    data = pd.read_csv(FILENAME, sep="	")
-    data = data.set_index(['name', 'time'])
-    skeleton = data/scale
-
-    body_angles = skeleton.apply(generate_angle_metrics, axis=1)
-
-    print(body_angles)
-
-    delta_skel = skeleton.diff();
-    pos_metrics = delta_skel.apply(generate_pos_metrics, axis=1)
-
-    print(pos_metrics)
-
-    export = body_angles[['sum_angles', 'abs_angles']].merge(pos_metrics[['heading', 'v0']], left_index=True, right_index=True)
+    export = proc(FILENAME, scale)
     export.to_csv('output.tsv', sep='	')
     print("see output.tsv for output")
