@@ -1,7 +1,10 @@
+from more_itertools import windowed
+import numpy as np
 import pandas as pd
 from math import sqrt, atan2, pi
 from itertools import islice
-from more_itertools import windowed
+
+from ellipsoid import EllipsoidTool
 
 from sys import argv
 
@@ -12,12 +15,10 @@ from sys import argv
 FILENAME = "input.tsv"
 scale = float(argv[1]) if len(argv) > 1 else None
 
-while scale is None:
-    # TODO: make this a feature in the distancer
-    try:
-        scale = float(input("What is the scale (px/mm)? "))
-    except ValueError:
-        print("Invalid floating point number, try again.")
+def bounding_ellipse(points, tolerance=1e-4):
+    center, radii, rotation = EllipsoidTool().getMinVolEllipse(points, tolerance=tolerance)
+    rotation = np.arctan2(rotation[1][0], rotation[0][0]) / pi * 180   # convert rot mat to angle: https://math.stackexchange.com/a/301335
+    return center, radii, rotation
 
 def angle_to_center(ax, ay, cx, cy, bx, by):
     # return '|'.join(str(int(x)) for x in [ cx, cy, ax, ay, bx, by ])  # check that the window is working properly
@@ -44,6 +45,15 @@ def generate_pos_metrics(pos):
     return pd.Series(ret, index=metrics)
 
 if __name__ == '__main__':
+
+    while scale is None:
+        # TODO: make this a feature in the distancer
+        try:
+            scale = float(input("What is the scale (px/mm)? "))
+        except ValueError:
+            print("Invalid floating point number, try again.")
+
+
     pd.options.display.float_format = "{:.2f}".format
 
     data = pd.read_csv(FILENAME, sep="	")
