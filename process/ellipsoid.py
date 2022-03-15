@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# taken from https://github.com/minillinim/ellipsoid/blob/master/ellipsoid.py
+
 from __future__ import division
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt

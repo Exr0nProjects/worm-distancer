@@ -2,8 +2,9 @@ import pandas as pd
 import numpy as np
 from numpy import exp, log
 from matplotlib import pyplot as plt
-
-from radio_beam.commonbeam import getMinVolEllipse # the only legit-seeming impl of Khachiyan algorithm I can find
+from ellipsoid import EllipsoidTool
+from scipy.spatial.transform import Rotation
+from math import pi
 
 filenames = ['j.tsv', 'm.tsv']
 filenames = ['2022_L1_training/' + name + '.tsv' for name in ['Peter', 'Stephanie', 'Zander']]
@@ -26,31 +27,33 @@ cmaps = [hsv_cmap(256, x, 0.7) for x in np.linspace(0.4, 0.9, 4)] * 2
 
 contrast_colors = [ (230, 25, 75), (60, 180, 75), (255, 225, 25), (0, 130, 200), (245, 130, 48), (145, 30, 180), (70, 240, 240), (240, 50, 230), (210, 245, 60), (250, 190, 212), (0, 128, 128), (220, 190, 255), (170, 110, 40), (255, 250, 200), (128, 0, 0), (170, 255, 195), (128, 128, 0), (255, 215, 180), (0, 0, 128), (128, 128, 128) ] # https://sashamaps.net/docs/resources/20-colors/
 
+from matplotlib.patches import Ellipse
+def plot_bounding_ellipse(ax, points, label, tolerance=1e-4):
+    center, radii, rotation = EllipsoidTool().getMinVolEllipse(points, tolerance=tolerance)
+    rotation = np.arctan2(rotation[1][0], rotation[0][0])   # convert rot mat to angle: https://math.stackexchange.com/a/301335
+    print(center, radii, rotation)
+    return ax.add_patch(Ellipse(center, width=radii[0]*2, height=radii[1]*2,
+                                angle=rotation / pi * 180, facecolor='none', edgecolor='blue'))
+
+
 def plot_skeleton_2d(ax, df, label):
     print(df)
     for i, row in df.iterrows():
         info = row[:3]
         pos  = row[3:]
-        print(pos)
+        # print(pos)
         posx = pos[1::2]
-        posy = pos[1::2]
-        print(posx, end='\n\n')
+        posy = pos[2::2]
+        # print(posx, end='\n\n')
+        print(posx, posy)
+        print(f'plotting for {label}')
         ax.scatter(posx, posy, label=label)
+
         # fit ellipse
-        # P = np.array([posx, posy], dtype='float64').T
-        P = np.array([[1607.694214, 1607.694214],
-              [1591.505249, 1591.505248],
-              [1616.366943, 1616.366943],
-              [1652.560547, 1652.560547],
-              [1678.506226, 1678.506226],
-              [1681.567383, 1681.567383],
-              [1664.015625, 1664.015625],
-              [1653.77063 , 1653.770631],
-              [1664.348633, 1664.348633],
-              [1696.733887, 1696.733887]])
-        print(P)
-        center, radii, rotation = getMinVolEllipse(P)
-        print(center, radii, rotation)
+        if True:
+            P = np.array([posx, posy], dtype='float64').T
+            plot_bounding_ellipse(ax, P, label)
+
         break
 
 def plot_all_2d(filenames):
@@ -127,7 +130,12 @@ def plot_3d_by_point(filenames):
 
 
 if __name__ == '__main__':
-    plot_all_2d(filenames)
+    fig, ax = plt.subplots()
+    points = np.array([[0, 0], [0.8, 4.2], [1, 0], [0, 1], [0, -1]])
+    ax.scatter(points[:, 0], points[:, 1])
+    plot_bounding_ellipse(ax, points, 'none')
+    plt.show()
+    # plot_all_2d(filenames)
 
     # plot_3d_by_point(filenames)
 
