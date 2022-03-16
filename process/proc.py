@@ -29,10 +29,12 @@ def generate_angle_metrics(pos):
     # print('pos after rem', pos, list(windowed([int(x) for x in pos], n=6, step=2)))
     angles = [ 180 + (angle_to_center(*points) * 180 / pi) for points in windowed(pos, n=6, step=2) ]
     angles = [ 0 if x != x else x for x in angles ]
+    arclen = sum(sqrt((a-c)^2 + (b-d)^2) for a, b, c, d in windowed(pos, n=4, step=2))
     center, radii, rotation = bounding_ellipse(np.reshape(list(pos), (len(pos)//2, 2)))
     data = {
         'sum_angles': sum(angles),
         'abs_angles': sum(abs(a) for a in angles),
+        'arclen': arclen,
         'ellipse_cx': center[0],
         'ellipse_cy': center[1],
         'ellipse_area': pi * radii[0] * radii[1],
