@@ -45,7 +45,7 @@ def generate_angle_metrics(pos):
             index=list(data.keys()) + ['a' + str(i) for i in range(1, len(pos)//2-1)])
 
 def generate_pos_metrics(pos):
-    metrics = ['sumabs', 'sumsquareabs', 'abssum', 'heading']\
+    metrics = ['sumabsdist', 'sumsquareabs', 'sumdist', 'heading']\
             + ['v' + str(i) for i in range(0, len(pos)//2)]
     deltax = pos[::2]
     deltay = pos[1::2]
@@ -67,7 +67,7 @@ def proc(filename, scale):
     delta_skel = skeleton.diff();
     pos_metrics = delta_skel.apply(generate_pos_metrics, axis=1)
 
-    return body_angles[['sum_angles', 'abs_angles']].merge(pos_metrics[['heading', 'v0']], left_index=True, right_index=True)
+    return body_angles[['sum_angles', 'abs_angles', 'arclen', 'ellipse_cx', 'ellipse_cy', 'ellipse_area', 'ellipse_angle', 'ellipse_ecentricity']].merge(pos_metrics[['heading', 'v0', 'sumabsdist', 'sumdist']], left_index=True, right_index=True)
 
 if __name__ == '__main__':
 
