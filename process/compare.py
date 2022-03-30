@@ -247,14 +247,18 @@ def plot_3d_by_point_split(dfds):
 
 
 VIDEOS_BY_STRAIN = {
-    'n2': [ 'ALS.22.3.8.#1.mp4' ],
-    'am': [ 'ALS.22.3.8.#2.mp4' ],
-    'cb': [ 'ALS.22.3.8.#3.mp4' ],
+    'n2': [ 'ALS.22.3.8.#1.mp4', 'LA.ALS.3.25.22.#1.mp4' ],
+    'am': [ 'ALS.22.3.8.#2.mp4', 'LA.ALS.3.25.22.#2.mp4' ],
+    'cb': [ 'ALS.22.3.8.#3.mp4', 'LA.ALS.3.25.22.#3.mp4' ],
+    'n2oil': [ 'AL.ALS.3.25.22.#6.mp4' ],
+    'cboil': [ 'LA.ALS.3.25.22.#7.mp4' ],
 }
-def dfd_filter(datas, author=None, strain=None, worm=None):
+def dfd_filter(datas, author=None, notauthor=None, strain=None, worm=None):
     # assumptions: every video contains worms of one strain, every worm is uniquely identified by video name and beginning time stamp
     def pred(dfd):
         if author is not None and dfd['author'] != author:
+            return False
+        if notauthor is not None and dfd['author'] in notauthor:
             return False
         if strain is not None and dfd['video'] not in VIDEOS_BY_STRAIN[strain]:
             return False
@@ -265,31 +269,7 @@ def dfd_filter(datas, author=None, strain=None, worm=None):
     return [x for x in datas if pred(x)]
 
 if __name__ == '__main__':
-    datas = [dfd for fname in glob('2022_L1_locomotion_assay/3-25-22/*.tsv') for dfd in jankily_read_combined_data(fname)]
-
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:90'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:169'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:230'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#2.mp4:70'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#2.mp4:222'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#2.mp4:309'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#3.mp4:51'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#3.mp4:85'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#3.mp4:200'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#3.mp4:290'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:56'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:64'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:99'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:159'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:224'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:242'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:332'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:481'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:607'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#7.mp4:20'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#7.mp4:85'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#7.mp4:245'))
-    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#7.mp4:358'))
+    # datas = [dfd for fname in glob('2022_L1_locomotion_assay/3-25-22/*.tsv') for dfd in jankily_read_combined_data(fname)]
 
 #
 #     for dfd in datas:
@@ -301,13 +281,16 @@ if __name__ == '__main__':
 #     with open('all_data_procced.pickle', 'wb') as wf:
 #         pickle.dump(datas, wf)
 
-    # with open('all_data_procced.pickle', 'rb') as rf:
-    #     datas = pickle.load(rf)
-    #
-    #
-    # print(len(datas))
-    # data = jankily_stddev(datas, [])
-    # print(data)
+    with open('all_data_procced.pickle', 'rb') as rf:
+        datas = pickle.load(rf)
+
+    # datas = dfd_filter(datas, strain='n2')
+    datas = dfd_filter(datas, notauthor=['zander'], worm='LA.ALS.3.25.22.#1.mp4:90')
+    print([(dfd['author'], dfd['df']) for dfd in datas])
+    jankly_show_data_distribution(datas, 'sum_angles', 2)
+
+    data = jankily_stddev(datas, [])
+    print(data)
 
     # plot_all_2d(filenames)
 
