@@ -33,8 +33,8 @@ def hsv_cmap(num_steps, h, s, modulate_opacity=False):
 
 # cmaps = ['Blues', 'Greens', 'Reds']*4
 # cmaps = ['summer', 'cool', 'winter']*4
-# cmaps = [hsv_cmap(256, x, 0.7) for x in np.linspace(0.4, 0.9, 4)] * 10
-cmaps = [hsv_cmap(256, 0.5908 + x/20, 0.6022) for x in range(-3, 4)]
+cmaps = [hsv_cmap(256, x, 0.7) for x in np.linspace(0.4, 0.9, 4)] * 10
+# cmaps = [hsv_cmap(256, 0.5908 + x/20, 0.6022) for x in range(-3, 4)]
 
 contrast_colors = [ (230, 25, 75), (60, 180, 75), (255, 225, 25), (0, 130, 200), (245, 130, 48), (145, 30, 180), (70, 240, 240), (240, 50, 230), (210, 245, 60), (250, 190, 212), (0, 128, 128), (220, 190, 255), (170, 110, 40), (255, 250, 200), (128, 0, 0), (170, 255, 195), (128, 128, 0), (255, 215, 180), (0, 0, 128), (128, 128, 128) ] # https://sashamaps.net/docs/resources/20-colors/
 
@@ -216,6 +216,7 @@ def plot_3d_by_point_split(dfds):
     scatters = []
     for time in range(len(dfds[0]['df'])):
         ax = plt.axes(projection='3d')
+        ax.set_title(f"time = {time}")
         annot = ax.annotate("", xy=(0,0), xytext=(5,5),textcoords="offset points")
         for dfd in dfds:
             labeller, df = dfd['author'], dfd['df']
@@ -259,8 +260,10 @@ def dfd_filter(datas, author=None, strain=None, worm=None):
 if __name__ == '__main__':
     datas = [dfd for fname in glob('2022_L1_locomotion_assay/3-25-22/*.tsv') for dfd in jankily_read_combined_data(fname)]
 
-    plot_3d_by_point(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:90'))
-    # plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:90'))
+    # plot_3d_by_point(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:90'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:90'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:169'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:230'))
 
 
     datas = [{ **dfd, 'df': calc_metrics(dfd['df'], dfd['scale']) } for dfd in tqdm(datas, desc="calculating metrics...")]
