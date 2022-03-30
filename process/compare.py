@@ -21,6 +21,8 @@ COLOR_N2 = '#34ca6d'
 COLOR_AM = '#ca3434'
 COLOR_CB = '#7434ca'
 
+TIME_RANGE = [-5, 6] # inc exc
+
 filenames = ['j.tsv', 'm.tsv']
 filenames = ['2022_L1_training/' + name + '.tsv' for name in ['Peter', 'Stephanie', 'Zander']]
 
@@ -110,16 +112,30 @@ def jankily_mean(dfds):
     return out
 
 
-def jankily_make_line_plot(dfdss, colors, col, title=None, xlabel=None, ylabel=None):
+def jankily_make_line_plot(dfdss, col,
+        colors=[COLOR_N2, COLOR_AM, COLOR_CB],
+        labels=['N2', 'AM725', 'CB1338'],
+        title=None, xlabel=None, ylabel=None):
     fig, ax = plt.subplots()
-    print(dfdss[0])
+    # print(dfdss[0])
     means = [jankily_mean(dfds) for dfds in dfdss]
     stddevs = [jankily_stddev(dfds) for dfds in dfdss]
 
-    for mean, stdd in zip(means, stddevs):
-        mean = mean[col]
-        stdd = stdd[col]
-        print(mean, stdd)
+    print(means)
+    print(stddevs)
+
+    for mean, stdd, color, label in zip(means, stddevs, colors, labels):
+        mean = np.array(mean[col])
+        stdd = np.array(stdd[col])
+        assert len(mean) == len(stdd)
+        ax.errorbar(range(*TIME_RANGE), mean, yerr=stdd, color=color, label=label, elinewidth=1)
+        ax.fill_between(range(*TIME_RANGE), mean + stdd, mean - stdd, alpha=0.1, color=color)
+
+    ax.set_title(title or f"{col} across strains")
+    ax.set_xlabel(xlabel or 'frame')
+    if ylabel: ax.set_ylabel(ylabel)
+    ax.legend()
+    plt.show()
 
 from matplotlib.patches import Ellipse
 def plot_bounding_ellipse(ax, points, label, tolerance=1e-4):
@@ -313,8 +329,7 @@ if __name__ == '__main__':
     # print([(dfd['author'], dfd['df']) for dfd in datas_n2])
     # jankly_show_data_distribution(datas_n2, 'sum_angles', 2)
 
-    jankily_make_line_plot([datas_n2, datas_n2oil, datas_cboil],
-            [COLOR_N2, COLOR_AM, COLOR_CB], 'ellipse_ecentricity')
+    jankily_make_line_plot([datas_n2, datas_n2oil, datas_cboil], 'ellipse_ecentricity')
 
     # plot_all_2d(filenames)
 
