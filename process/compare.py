@@ -33,7 +33,8 @@ def hsv_cmap(num_steps, h, s, modulate_opacity=False):
 
 # cmaps = ['Blues', 'Greens', 'Reds']*4
 # cmaps = ['summer', 'cool', 'winter']*4
-cmaps = [hsv_cmap(256, x, 0.7) for x in np.linspace(0.4, 0.9, 4)] * 2
+# cmaps = [hsv_cmap(256, x, 0.7) for x in np.linspace(0.4, 0.9, 4)] * 10
+cmaps = [hsv_cmap(256, 0.5908 + x/20, 0.6022) for x in range(-3, 4)]
 
 contrast_colors = [ (230, 25, 75), (60, 180, 75), (255, 225, 25), (0, 130, 200), (245, 130, 48), (145, 30, 180), (70, 240, 240), (240, 50, 230), (210, 245, 60), (250, 190, 212), (0, 128, 128), (220, 190, 255), (170, 110, 40), (255, 250, 200), (128, 0, 0), (170, 255, 195), (128, 128, 0), (255, 215, 180), (0, 0, 128), (128, 128, 128) ] # https://sashamaps.net/docs/resources/20-colors/
 
@@ -131,18 +132,19 @@ def plot_all_2d(filenames):
 #             ax.scatter3D(xdata, ydata, zdata, s=500, c=zdata, cmap=cmap)
 #     plt.show()
 
-def plot_3d_by_point(filenames):
-    dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
+def plot_3d_by_point(dfds):
+    # dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
     ax = plt.axes(projection='3d')
 
     scatters = []
-    for labeller, df in dfs:
-        for (t, row), cmap in zip(df.iterrows(), cmaps):
+    for dfd in dfds:
+        labeller, df = dfd['author'], dfd['df']
+        for (t, row), cmap in zip(list(df.iterrows())[-8:-3], cmaps):
             ydata = row[4::2]
             zdata = row[5::2]
             xdata = [t] * len(ydata)
             print(labeller, t, f'(color={cmap}) (lens)', len(ydata), len(zdata))
-            scatters.append((labeller, ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap=cmap, label=labeller)))
+            scatters.append((labeller, ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap=cmap, label=labeller, alpha=1)))
 
     # create tooltips (https://towardsdatascience.com/tooltips-with-pythons-matplotlib-dcd8db758846)
     annot = ax.annotate("", xy=(0,0), xytext=(5,5),textcoords="offset points")
@@ -177,6 +179,65 @@ def plot_3d_by_point(filenames):
     plt.show()
 
 
+
+def plot_3d_by_point_split(dfds):
+    # dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
+
+
+
+    # create tooltips (https://towardsdatascience.com/tooltips-with-pythons-matplotlib-dcd8db758846)
+
+    class TooltipManager:
+        def __init__(self, scatters, tooltip):
+            self.scatters = scatters
+            self.tooltip = tooltip
+            self.last_tip = ""
+
+        def handle_hover(self, event):
+            labels = set()
+            for label, sc in self.scatters:
+                cont, _ = sc.contains(event)
+                if cont:
+                    labels.add(label)
+
+            if len(labels):
+                self.tooltip.xy = (event.xdata, event.ydata)
+                label_text = f"{', '.join(n for n in labels)}"
+            else:
+                label_text = ""
+
+            if self.last_tip != label_text:
+                annot.set_text(label_text)
+                plt.gcf().canvas.draw()
+                self.last_tip = label_text
+
+
+    # create scatters
+    scatters = []
+    for time in range(len(dfds[0]['df'])):
+        ax = plt.axes(projection='3d')
+        annot = ax.annotate("", xy=(0,0), xytext=(5,5),textcoords="offset points")
+        for dfd in dfds:
+            labeller, df = dfd['author'], dfd['df']
+            for (t, row), cmap in zip(df.iterrows(), cmaps):
+                if t != time: continue
+                ydata = row[4::2]
+                zdata = row[5::2]
+                xdata = [t] * len(ydata)
+                # print(labeller, t, f'(color={cmap}) (lens)', len(ydata), len(zdata))
+                scatters.append((labeller, ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap=cmap, label=labeller, alpha=1)))
+
+                ax.set_title(f"{dfd['author']} {dfd['video']} {dfd['time']} {t}")
+
+        # more tooltip stuff
+        tooltip_mgr = TooltipManager(scatters, annot)
+        plt.gcf().canvas.mpl_connect("motion_notify_event", tooltip_mgr.handle_hover)
+        plt.show()
+
+
+    plt.show()
+
+
 VIDEOS_BY_STRAIN = {
     'n2': [ 'ALS.22.3.8.#1.mp4' ],
     'am': [ 'ALS.22.3.8.#2.mp4' ],
@@ -189,25 +250,22 @@ def dfd_filter(datas, author=None, strain=None, worm=None):
             return False
         if strain is not None and dfd['video'] not in VIDEOS_BY_STRAIN[strain]:
             return False
-        if worm is not None and dfd['video'] + ':' + str(dfd['time']) != worm:
+        if worm is not None and f"{dfd['video']}:{str(dfd['time']) }" != worm:
+            # print(dfd['video'], dfd['time'])
             return False
         return True
-    return filter(pred, datas)
+    return [x for x in datas if pred(x)]
 
 if __name__ == '__main__':
-    datas = [dfd for fname in glob('2022_L1_locomotion_assay/*.tsv') for dfd in jankily_read_combined_data(fname)]
+    datas = [dfd for fname in glob('2022_L1_locomotion_assay/3-25-22/*.tsv') for dfd in jankily_read_combined_data(fname)]
+
+    plot_3d_by_point(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:90'))
+    # plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:90'))
+
 
     datas = [{ **dfd, 'df': calc_metrics(dfd['df'], dfd['scale']) } for dfd in tqdm(datas, desc="calculating metrics...")]
-    # for dfd in datas:
-    #     dfd['df'].to_csv(f"out/{dfd['author']} {dfd['video']} {dfd['time']}")
-    # jankily_collate_data(datas)
-    jankly_show_data_distribution(dfd_filter(datas, worm='ALS.22.3.8.#1.mp4:107'), 'arclen', 5)
-    jankly_show_data_distribution(dfd_filter(datas, worm='ALS.22.3.8.#1.mp4:107'), 'arclen', 4)
-    jankly_show_data_distribution(dfd_filter(datas, worm='ALS.22.3.8.#1.mp4:107'), 'arclen', 3)
-    jankly_show_data_distribution(dfd_filter(datas, worm='ALS.22.3.8.#1.mp4:107'), 'arclen', 2)
 
 
     # plot_all_2d(filenames)
 
-    # plot_3d_by_point(filenames)
 
