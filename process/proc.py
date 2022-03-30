@@ -57,8 +57,8 @@ def generate_pos_metrics(pos):
     ret = [ sumabs, sumsquareabs, abssum, heading ] + dists
     return pd.Series(ret, index=metrics)
 
-def proc(filename, scale):
-    data = pd.read_csv(filename, sep="	")
+def proc(data, scale):
+    # data = pd.read_csv(filename, sep="	")
     data = data.set_index(['name', 'time'])
     skeleton = data/scale
 
@@ -81,6 +81,6 @@ if __name__ == '__main__':
 
     pd.options.display.float_format = "{:.2f}".format
 
-    export = proc(FILENAME, scale)
+    export = proc(pd.read_csv(FILENAME, sep="	"), scale)
     export.to_csv('output.tsv', sep='	')
     print("see output.tsv for output")
