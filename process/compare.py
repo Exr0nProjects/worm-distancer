@@ -380,11 +380,13 @@ if __name__ == '__main__':
 
 
     # all worms in the strain
-    strains = ['N2', 'AM', 'CB']
-    datas_n2, datas_n2oil, datas_cboil = [dfd_filter(datas, notauthor=['zander'], strain=strain) for strain in strains]
-    print(len(datas_n2), len(datas_n2oil), len(datas_cboil))
-    data_in_strains = jankily_collate_by_worm([datas_n2, datas_n2oil, datas_cboil])
-    colors = [COLOR_N2, COLOR_AM, COLOR_CB]
+    # strains, colors = ['N2', 'N2+CBD', 'CB'], [COLOR_N2, COLOR_AM, COLOR_CB]
+    # strains, colors = ['N2', 'N2+CBD'], [COLOR_N2, COLOR_N2OIL]
+    # strains, colors = ['N2', 'AM+CBD'], [COLOR_N2, COLOR_AMOIL]
+    strains, colors = ['N2', 'AM', 'AM+CBD', 'CB'], [COLOR_N2, COLOR_AM, COLOR_AMOIL, COLOR_CB]
+    data_in_strains = [dfd_filter(datas, notauthor=['zander'], strain=strain) for strain in strains]
+    print([len(x) for x in data_in_strains])
+    data_in_strains = jankily_collate_by_worm(data_in_strains)
 
     metric_id = ['arclen', 'ellipse_ecentricity', 'heading', 'v0']
     metric_display = ['Body length', 'Ellipse eccentricity', 'Heading', 'Centroid speed']
