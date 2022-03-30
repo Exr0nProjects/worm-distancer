@@ -118,24 +118,28 @@ def jankily_make_line_plot(dfdss, col,
         title=None, xlabel=None, ylabel=None):
     fig, ax = plt.subplots()
     # print(dfdss[0])
+    sizes = [len(dfds) for dfds in dfdss]
     means = [jankily_mean(dfds) for dfds in dfdss]
     stddevs = [jankily_stddev(dfds) for dfds in dfdss]
 
-    print(means)
-    print(stddevs)
+    for df in means: print(df); print('\n')
+    for df in stddevs: print(df); print('\n')
 
-    for mean, stdd, color, label in zip(means, stddevs, colors, labels):
-        mean = np.array(mean[col])
-        stdd = np.array(stdd[col])
+    for n, mean, stdd, color, label in zip(sizes, means, stddevs, colors, labels):
+        mean = np.array([x for x in mean[col] if not math.isnan(x)])
+        stdd = np.array([x for x in stdd[col] if not math.isnan(x)])
+        frames = list(range(*(TIME_RANGE if len(mean) == 11 else [-4, 6])))
         assert len(mean) == len(stdd)
-        ax.errorbar(range(*TIME_RANGE), mean, yerr=stdd, color=color, label=label, elinewidth=1)
-        ax.fill_between(range(*TIME_RANGE), mean + stdd, mean - stdd, alpha=0.1, color=color)
+        ax.errorbar(frames, mean, yerr=stdd,
+                color=color, elinewidth=1,
+                label=f"{label} (n={n})")
+        ax.fill_between(frames, mean + stdd, mean - stdd, alpha=0.1, color=color)
 
     ax.set_title(title or f"{col} across strains")
     ax.set_xlabel(xlabel or 'frame')
     if ylabel: ax.set_ylabel(ylabel)
     ax.legend()
-    plt.show()
+    # plt.show()
 
 from matplotlib.patches import Ellipse
 def plot_bounding_ellipse(ax, points, label, tolerance=1e-4):
@@ -318,19 +322,18 @@ if __name__ == '__main__':
 
     # POSTER TODO: realign headings; how to collate multiple worms of the same strain
 
-    # for dfd in datas:
-    #     print(dfd['author'], dfd['video'], dfd['time'])
-
-    # datas = dfd_filter(datas, strain='n2')
-    datas_n2 = dfd_filter(datas, notauthor=['zander'], worm='LA.ALS.3.25.22.#1.mp4:90')
-    datas_n2oil = dfd_filter(datas, notauthor=['zander'], worm='AL.ALS.3.25.22.#6.mp4:56')
-    datas_cboil = dfd_filter(datas, notauthor=['zander'], worm='LA.ALS.3.25.22.#7.mp4:20')
+    # worms = ['LA.ALS.3.25.22.#1.mp4:90', 'AL.ALS.3.25.22.#6.mp4:56', 'LA.ALS.3.25.22.#7.mp4:20']
+    # datas_n2, datas_n2oil, datas_cboil = [dfd_filter(datas, notauthor=['zander'], worm=worm) for worm in worms]
+    strains = ['n2', 'am', 'cb']
+    datas_n2, datas_n2oil, datas_cboil = [dfd_filter(datas, notauthor=['zander'], strain=strain) for strain in strains]
     print(len(datas_n2), len(datas_n2oil), len(datas_cboil))
+    jankily_make_line_plot([datas_n2, datas_n2oil, datas_cboil], 'heading', labels=strains)
+
     # print([(dfd['author'], dfd['df']) for dfd in datas_n2])
     # jankly_show_data_distribution(datas_n2, 'sum_angles', 2)
 
-    jankily_make_line_plot([datas_n2, datas_n2oil, datas_cboil], 'ellipse_ecentricity')
 
     # plot_all_2d(filenames)
 
 
+    plt.savefig('out.png', dpi=300)
