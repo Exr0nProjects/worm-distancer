@@ -66,8 +66,10 @@ def proc(data, scale):
 
     delta_skel = skeleton.diff();
     pos_metrics = delta_skel.apply(generate_pos_metrics, axis=1)
+    pos_metrics['heading'] = pos_metrics['heading'] - pos_metrics['heading'][1]
+    pos_metrics['abs_heading'] = pos_metrics['heading'].abs()
 
-    return body_angles[['sum_angles', 'abs_angles', 'arclen', 'ellipse_cx', 'ellipse_cy', 'ellipse_area', 'ellipse_angle', 'ellipse_ecentricity']].merge(pos_metrics[['heading', 'v0', 'sumabsdist', 'sumdist']], left_index=True, right_index=True)
+    return body_angles[['sum_angles', 'abs_angles', 'arclen', 'ellipse_cx', 'ellipse_cy', 'ellipse_area', 'ellipse_angle', 'ellipse_ecentricity']].merge(pos_metrics[['heading', 'abs_heading', 'v0', 'sumabsdist', 'sumdist']], left_index=True, right_index=True)
 
 if __name__ == '__main__':
 

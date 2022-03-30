@@ -1,14 +1,15 @@
 import pandas as pd
 import numpy as np
-from numpy import exp, log
+# from numpy import exp, log
 from matplotlib import pyplot as plt
 # from scipy.spatial.transform import Rotation
-from math import pi
+# from math import pi
 from io import StringIO
 from glob import glob
-from operator import itemgetter as get
-from tqdm import tqdm
+# from operator import itemgetter as get
+# from tqdm import tqdm
 import pickle
+from collections import defaultdict
 
 import statistics as stats
 import math
@@ -111,6 +112,30 @@ def jankily_mean(dfds):
                 )
     return out
 
+def jankily_collate_by_worm(dfdss):
+    ret = []
+    for dfds_per_strain in dfdss:
+        annotators_by_worm = defaultdict(list)
+        for dfd_per_author in dfds_per_strain:
+            dfd = dfd_per_author
+            print('dfd', dfd, '\n\n\n')
+            annotators_by_worm[f"{dfd['video']}:{dfd['time']}"].append(dfd)
+
+        # TODO: average standard deviation https://www.statology.org/averaging-standard-deviations/
+        # print(list(annotators_by_worm.values()))
+        dfds_per_strain = []
+        for strain in annotators_by_worm.values():
+            print('strain', strain, '\n\n\n')
+            dfds_per_strain.append({ **strain[0],
+                'scale': stats.fmean(dfd['scale'] for dfd in strain),
+                'author': ', '.join(dfd['author'] for dfd in strain),
+                'df': jankily_mean(strain) })
+        ret.append(dfds_per_strain)
+    print("\n\n\n\n")
+    print(ret)
+    print("\n\n", len(ret), '\n\n')
+    print(*[len(x) for x in ret], '\n\n\n\n\n\n\n')
+    return ret
 
 def jankily_make_line_plot(dfdss, col,
         colors=[COLOR_N2, COLOR_AM, COLOR_CB],
@@ -279,9 +304,12 @@ def plot_3d_by_point_split(dfds):
 
 
 VIDEOS_BY_STRAIN = {
-    'n2': [ 'ALS.22.3.8.#1.mp4', 'LA.ALS.3.25.22.#1.mp4' ],
-    'am': [ 'ALS.22.3.8.#2.mp4', 'LA.ALS.3.25.22.#2.mp4' ],
-    'cb': [ 'ALS.22.3.8.#3.mp4', 'LA.ALS.3.25.22.#3.mp4' ],
+    # 'n2': [ 'ALS.22.3.8.#1.mp4', 'LA.ALS.3.25.22.#2.mp4' ],
+    # 'am': [ 'ALS.22.3.8.#2.mp4', 'LA.ALS.3.25.22.#3.mp4' ],
+    # 'cb': [ 'ALS.22.3.8.#3.mp4', 'LA.ALS.3.25.22.#1.mp4' ],
+    'n2': [ 'LA.ALS.3.25.22.#2.mp4' ],
+    'am': [ 'LA.ALS.3.25.22.#3.mp4' ],
+    'cb': [ 'LA.ALS.3.25.22.#1.mp4' ],
     'n2oil': [ 'AL.ALS.3.25.22.#6.mp4' ],
     'cboil': [ 'LA.ALS.3.25.22.#7.mp4' ],
 }
@@ -305,13 +333,13 @@ def dfd_filter(datas, author=None, notauthor=None, strain=None, worm=None):
     return [x for x in datas if pred(x)]
 
 if __name__ == '__main__':
-    # datas = [dfd for fname in glob('2022_L1_locomotion_assay/3-25-22/*.tsv') for dfd in jankily_read_combined_data(fname)]
-
+#     datas = [dfd for fname in glob('2022_L1_locomotion_assay/3-25-22/*.tsv') for dfd in jankily_read_combined_data(fname)]
 #
-#     for dfd in datas:
-#         print(f"processing {dfd['author']} {dfd['video']}")
-#         calc_metrics(dfd['df'], dfd['scale'])
-#
+# #
+# #     for dfd in datas:
+# #         print(f"processing {dfd['author']} {dfd['video']}")
+# #         calc_metrics(dfd['df'], dfd['scale'])
+# #
 #     datas = [{ **dfd, 'df': calc_metrics(dfd['df'], dfd['scale']) } for dfd in tqdm(datas, desc="calculating metrics...")]
 #
 #     with open('all_data_procced.pickle', 'wb') as wf:
@@ -327,7 +355,8 @@ if __name__ == '__main__':
     strains = ['n2', 'am', 'cb']
     datas_n2, datas_n2oil, datas_cboil = [dfd_filter(datas, notauthor=['zander'], strain=strain) for strain in strains]
     print(len(datas_n2), len(datas_n2oil), len(datas_cboil))
-    jankily_make_line_plot([datas_n2, datas_n2oil, datas_cboil], 'heading', labels=strains)
+    data_in_strains = jankily_collate_by_worm([datas_n2, datas_n2oil, datas_cboil])
+    jankily_make_line_plot(data_in_strains, 'heading', labels=strains)
 
     # print([(dfd['author'], dfd['df']) for dfd in datas_n2])
     # jankly_show_data_distribution(datas_n2, 'sum_angles', 2)
