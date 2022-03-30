@@ -7,8 +7,14 @@ from math import pi
 from io import StringIO
 from glob import glob
 from operator import itemgetter as get
+from tqdm import tqdm
 
 from proc import bounding_ellipse, proc as calc_metrics
+
+COLOR_DEFAULT = '#4a7dba'
+COLOR_N2 = '#34ca6d'
+COLOR_AM = '#ca3434'
+COLOR_CB = '#7434ca'
 
 filenames = ['j.tsv', 'm.tsv']
 filenames = ['2022_L1_training/' + name + '.tsv' for name in ['Peter', 'Stephanie', 'Zander']]
@@ -70,9 +76,15 @@ def jankily_collate_data(dfds):
         print(author, df)
         raise NotImplementedError("how to get standard deviation?")
 
-def jankly_show_data_distribution(dfds, row, col):
+def jankly_show_data_distribution(dfds, row, col,
+        title=None, xlabel=None, ylabel=None, strain=None):
     fig, ax = plt.subplots()
-    print(ax)
+    ax.hist([dfd['df'][row][col] for dfd in dfds], color=COLOR_DEFAULT)
+
+    ax.set_xlabel(xlabel or row)
+    ax.set_ylabel(ylabel or "# of annotators")
+    ax.set_title(title or f"Distribution of {row} at time {col}{' in ' + strain if strain else ''}")
+    plt.show()
 
 from matplotlib.patches import Ellipse
 def plot_bounding_ellipse(ax, points, label, tolerance=1e-4):
@@ -177,19 +189,22 @@ def dfd_filter(datas, author=None, strain=None, worm=None):
             return False
         if strain is not None and dfd['video'] not in VIDEOS_BY_STRAIN[strain]:
             return False
-        if worm is not None and dfd['video'] + ':' + dfd['time'] != worm:
+        if worm is not None and dfd['video'] + ':' + str(dfd['time']) != worm:
             return False
         return True
     return filter(pred, datas)
 
 if __name__ == '__main__':
     datas = [dfd for fname in glob('2022_L1_locomotion_assay/*.tsv') for dfd in jankily_read_combined_data(fname)]
-    datas = [{ **dfd, 'df': calc_metrics(dfd['df'], dfd['scale']) } for dfd in datas]
-    print(datas)
+
+    datas = [{ **dfd, 'df': calc_metrics(dfd['df'], dfd['scale']) } for dfd in tqdm(datas, desc="calculating metrics...")]
     # for dfd in datas:
     #     dfd['df'].to_csv(f"out/{dfd['author']} {dfd['video']} {dfd['time']}")
     # jankily_collate_data(datas)
-    jankly_show_data_distribution(dfd_filter(datas, author='peter'), 'heading', 3)
+    jankly_show_data_distribution(dfd_filter(datas, worm='ALS.22.3.8.#1.mp4:107'), 'arclen', 5)
+    jankly_show_data_distribution(dfd_filter(datas, worm='ALS.22.3.8.#1.mp4:107'), 'arclen', 4)
+    jankly_show_data_distribution(dfd_filter(datas, worm='ALS.22.3.8.#1.mp4:107'), 'arclen', 3)
+    jankly_show_data_distribution(dfd_filter(datas, worm='ALS.22.3.8.#1.mp4:107'), 'arclen', 2)
 
 
     # plot_all_2d(filenames)
