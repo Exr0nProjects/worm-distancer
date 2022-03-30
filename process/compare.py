@@ -2,12 +2,17 @@ import pandas as pd
 import numpy as np
 from numpy import exp, log
 from matplotlib import pyplot as plt
-from scipy.spatial.transform import Rotation
+# from scipy.spatial.transform import Rotation
 from math import pi
 from io import StringIO
 from glob import glob
 from operator import itemgetter as get
 from tqdm import tqdm
+import pickle
+
+import statistics as stats
+import math
+
 
 from proc import bounding_ellipse, proc as calc_metrics
 
@@ -60,22 +65,24 @@ def jankily_read_combined_data(filename):
 
     return ret
 
-def jankily_collate_data(dfds):
-    # iterrows = [dfd['df'].iterrows() for dfd in dfds]
-    # for rows in zip(*iterrows):
-    #     print(rows)
-    #     # for row in rows:
-    #     #     for x in row:
-    #     #         print(x)
-    #     print("aotehurockbroebk\n\n")
+def jankily_stddev(dfds, blacklist):
+    """Takes the cellwise stdev of a list of CSVs."""
+    dfs = [dfd['df'] for dfd in dfds]
+    out = dfs[0]  # clone dfs cause im lazyy
 
-    # combined = pd.concat((dfd['df'] for dfd in dfds), keys=(dfd['author'] for dfd in dfds))
-    # print(combined)
-
-    for dfd in dfds:
-        author, df = dfd['author'], dfd['df']
-        print(author, df)
-        raise NotImplementedError("how to get standard deviation?")
+    for name in dfs[0].columns:
+        if name in blacklist:
+            print(name)
+            continue
+        for i, _x in enumerate(dfs[0][name]):
+            points = [df[name][i] for df in dfs]
+            if math.isnan(set(points).pop()):
+                out[name][i] = float('nan')
+            else:
+                out[name][i] = stats.stdev(
+                    list(filter(lambda x: not math.isnan(x), points))
+                )
+    return out
 
 def jankly_show_data_distribution(dfds, row, col,
         title=None, xlabel=None, ylabel=None, strain=None):
@@ -182,9 +189,6 @@ def plot_3d_by_point(dfds):
 
 def plot_3d_by_point_split(dfds):
     # dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
-
-
-
     # create tooltips (https://towardsdatascience.com/tooltips-with-pythons-matplotlib-dcd8db758846)
 
     class TooltipManager:
@@ -215,7 +219,7 @@ def plot_3d_by_point_split(dfds):
     # create scatters
     scatters = []
     for time in range(len(dfds[0]['df'])):
-        ax = plt.axes(projection='3d')
+        fig, ax = plt.subplots()
         ax.set_title(f"time = {time}")
         annot = ax.annotate("", xy=(0,0), xytext=(5,5),textcoords="offset points")
         for dfd in dfds:
@@ -225,8 +229,10 @@ def plot_3d_by_point_split(dfds):
                 ydata = row[4::2]
                 zdata = row[5::2]
                 xdata = [t] * len(ydata)
+                print("plotting one")
+                print(labeller, t)
                 # print(labeller, t, f'(color={cmap}) (lens)', len(ydata), len(zdata))
-                scatters.append((labeller, ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap=cmap, label=labeller, alpha=1)))
+                scatters.append((labeller, ax.scatter(ydata, zdata, c=np.linspace(0, 1, 10), cmap=cmap, label=labeller, alpha=1)))
 
                 ax.set_title(f"{dfd['author']} {dfd['video']} {dfd['time']} {t}")
 
@@ -234,6 +240,7 @@ def plot_3d_by_point_split(dfds):
         tooltip_mgr = TooltipManager(scatters, annot)
         plt.gcf().canvas.mpl_connect("motion_notify_event", tooltip_mgr.handle_hover)
         plt.show()
+        print("plt show")
 
 
     plt.show()
@@ -260,14 +267,47 @@ def dfd_filter(datas, author=None, strain=None, worm=None):
 if __name__ == '__main__':
     datas = [dfd for fname in glob('2022_L1_locomotion_assay/3-25-22/*.tsv') for dfd in jankily_read_combined_data(fname)]
 
-    # plot_3d_by_point(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:90'))
     plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:90'))
     plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:169'))
     plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:230'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#2.mp4:70'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#2.mp4:222'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#2.mp4:309'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#3.mp4:51'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#3.mp4:85'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#3.mp4:200'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#3.mp4:290'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:56'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:64'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:99'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:159'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:224'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:242'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:332'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:481'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='AL.ALS.3.25.22.#6.mp4:607'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#7.mp4:20'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#7.mp4:85'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#7.mp4:245'))
+    plot_3d_by_point_split(dfd_filter(datas, worm='LA.ALS.3.25.22.#7.mp4:358'))
 
+#
+#     for dfd in datas:
+#         print(f"processing {dfd['author']} {dfd['video']}")
+#         calc_metrics(dfd['df'], dfd['scale'])
+#
+#     datas = [{ **dfd, 'df': calc_metrics(dfd['df'], dfd['scale']) } for dfd in tqdm(datas, desc="calculating metrics...")]
+#
+#     with open('all_data_procced.pickle', 'wb') as wf:
+#         pickle.dump(datas, wf)
 
-    datas = [{ **dfd, 'df': calc_metrics(dfd['df'], dfd['scale']) } for dfd in tqdm(datas, desc="calculating metrics...")]
-
+    # with open('all_data_procced.pickle', 'rb') as rf:
+    #     datas = pickle.load(rf)
+    #
+    #
+    # print(len(datas))
+    # data = jankily_stddev(datas, [])
+    # print(data)
 
     # plot_all_2d(filenames)
 
