@@ -122,19 +122,13 @@ def jankily_collate_by_worm(dfdss):
             annotators_by_worm[f"{dfd['video']}:{dfd['time']}"].append(dfd)
 
         # TODO: average standard deviation https://www.statology.org/averaging-standard-deviations/
-        # print(list(annotators_by_worm.values()))
         dfds_per_strain = []
         for strain in annotators_by_worm.values():
-            print('strain', strain, '\n\n\n')
             dfds_per_strain.append({ **strain[0],
                 'scale': stats.fmean(dfd['scale'] for dfd in strain),
                 'author': ', '.join(dfd['author'] for dfd in strain),
                 'df': jankily_mean(strain) })
         ret.append(dfds_per_strain)
-    print("\n\n\n\n")
-    print(ret)
-    print("\n\n", len(ret), '\n\n')
-    print(*[len(x) for x in ret], '\n\n\n\n\n\n\n')
     return ret
 
 def jankily_make_line_plot(dfdss, col,
@@ -142,7 +136,6 @@ def jankily_make_line_plot(dfdss, col,
         labels=['N2', 'AM725', 'CB1338'],
         title=None, xlabel=None, ylabel=None):
     fig, ax = plt.subplots()
-    # print(dfdss[0])
     sizes = [len(dfds) for dfds in dfdss]
     means = [jankily_mean(dfds) for dfds in dfdss]
     stddevs = [jankily_stddev(dfds) for dfds in dfdss]
@@ -197,7 +190,6 @@ def plot_all_2d(filenames):
 
 
 def plot_3d_by_point(dfds):
-    # dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
     ax = plt.axes(projection='3d')
 
     scatters = []
@@ -244,7 +236,7 @@ def plot_3d_by_point(dfds):
 
 
 
-def plot_3d_by_point_split(dfds):
+def plot_worms_per_timestep(dfds):
     # dfs = [(name, pd.read_csv(name, sep='	')) for name in filenames]
     # create tooltips (https://towardsdatascience.com/tooltips-with-pythons-matplotlib-dcd8db758846)
 
@@ -304,6 +296,7 @@ def plot_3d_by_point_split(dfds):
 
 
 VIDEOS_BY_STRAIN = {
+    # commented out data from 3-10-22 sheet
     # 'n2': [ 'ALS.22.3.8.#1.mp4', 'LA.ALS.3.25.22.#2.mp4' ],
     # 'am': [ 'ALS.22.3.8.#2.mp4', 'LA.ALS.3.25.22.#3.mp4' ],
     # 'cb': [ 'ALS.22.3.8.#3.mp4', 'LA.ALS.3.25.22.#1.mp4' ],
@@ -350,19 +343,19 @@ if __name__ == '__main__':
 
     # POSTER TODO: realign headings; how to collate multiple worms of the same strain
 
+    # random worms (one per strain)
     # worms = ['LA.ALS.3.25.22.#1.mp4:90', 'AL.ALS.3.25.22.#6.mp4:56', 'LA.ALS.3.25.22.#7.mp4:20']
     # datas_n2, datas_n2oil, datas_cboil = [dfd_filter(datas, notauthor=['zander'], worm=worm) for worm in worms]
+
+    # all worms in the strain
     strains = ['n2', 'am', 'cb']
     datas_n2, datas_n2oil, datas_cboil = [dfd_filter(datas, notauthor=['zander'], strain=strain) for strain in strains]
     print(len(datas_n2), len(datas_n2oil), len(datas_cboil))
     data_in_strains = jankily_collate_by_worm([datas_n2, datas_n2oil, datas_cboil])
     jankily_make_line_plot(data_in_strains, 'heading', labels=strains)
 
+    # show data distribution
     # print([(dfd['author'], dfd['df']) for dfd in datas_n2])
     # jankly_show_data_distribution(datas_n2, 'sum_angles', 2)
-
-
-    # plot_all_2d(filenames)
-
 
     plt.savefig('out.png', dpi=300)
