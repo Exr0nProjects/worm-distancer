@@ -121,7 +121,7 @@ def jankily_collate_by_worm(dfdss):
         annotators_by_worm = defaultdict(list)
         for dfd_per_author in dfds_per_strain:
             dfd = dfd_per_author
-            print('dfd', dfd, '\n\n\n')
+            # print('dfd', dfd, '\n\n\n')
             annotators_by_worm[f"{dfd['video']}:{dfd['time']}"].append(dfd)
 
         # TODO: average standard deviation https://www.statology.org/averaging-standard-deviations/
@@ -143,8 +143,8 @@ def jankily_make_line_plot(dfdss, col,
     means = [jankily_mean(dfds) for dfds in dfdss]
     stddevs = [jankily_stddev(dfds) for dfds in dfdss]
 
-    for df in means: print(df); print('\n')
-    for df in stddevs: print(df); print('\n')
+    # for df in means: print(df); print('\n')
+    # for df in stddevs: print(df); print('\n')
 
     for n, mean, stdd, color, label in zip(sizes, means, stddevs, colors, labels):
         mean = np.array([x for x in mean[col] if not math.isnan(x)])
@@ -346,55 +346,38 @@ if __name__ == '__main__':
 
     # POSTER TODO: realign headings; how to collate multiple worms of the same strain
 
+    # comparing indivudal worms, possibly across strains
+    # worms, labels, colors, strains = [f'AL.ALS.3.25.22.#6.mp4:{time}' for time in [56, 64, 99, 159, 224, 242, 332, 481, 607]], [f'N2+CBD:{time}' for time in [56, 64, 99, 159, 224, 242, 332, 481, 607]], hsv_cmap(9, *COLOR_N2OIL_HS).colors, ['N2+CBD']   # all of the N2+CBDs
+    # worms, labels, colors, strains = [f'LA.ALS.3.25.22.#2.mp4:{time}' for time in [70, 222, 309]] + [f'AL.ALS.3.25.22.#6.mp4:{time}' for time in [56, 64, 99]], [f'N2:{time}' for time in [70, 22, 309]] + [f'N2+CBD:{time}' for time in [56, 64, 99]], list(hsv_cmap(3, *COLOR_N2_HS).colors) + list(hsv_cmap(3, *COLOR_N2OIL_HS).colors), ['N2', 'N2+CBD']  # N2 vs N2 + CBD individuals
+    worms, labels, colors, strains = [f'LA.ALS.3.25.22.#3.mp4:{time}' for time in [51, 85, 200, 290]] + [f'LA.ALS.3.25.22.#7.mp4:{time}' for time in [20, 85, 245, 358]], [f'AM:{time}' for time in [51, 85, 200, 290]] + [f'AM+CBD:{time}' for time in [20, 85, 245, 358]], list(hsv_cmap(4, *COLOR_AM_HS).colors) + list(hsv_cmap(4, *COLOR_AMOIL_HS).colors), ['AM', 'AM+CBD']  # AM vs AM + CBD individuals
 
-
-
-    # # random worms (one per strain)
-    # # worms = ['LA.ALS.3.25.22.#1.mp4:90', 'AL.ALS.3.25.22.#6.mp4:56', 'LA.ALS.3.25.22.#7.mp4:20']  # worms of different strains
-    #
-    # # worms = [f'AL.ALS.3.25.22.#6.mp4:{time}' for time in [56, 64, 99, 159, 224, 242, 332, 481, 607]]
-    # # labels = [f'CB1338 + CBD:{time}' for time in [56, 64, 99, 159, 224, 242, 332, 481, 607]]
-    # # worms_dfdss = [dfd_filter(datas, notauthor=['zander'], worm=worm) for worm in worms]
-    # # jankily_make_line_plot(worms_dfdss, 'ellipse_ecentricity', labels=labels, title="Ellipse ecentricity (CB1338 + CBD)", ylabel='mm', colors=hsv_cmap(len(worms), *COLOR_N2_HS).colors)
-    # # # jankily_make_line_plot(worms_dfdss, 'v0', labels=labels, title="Centroid velocity (CB1338 + CBD)", ylabel='mm', colors=hsv_cmap(len(worms), *COLOR_N2_HS).colors)
-
-    # all the N2 + CB1338
-    # worms = [f'AL.ALS.3.25.22.#6.mp4:{time}' for time in [56, 64, 99, 159, 224, 242, 332, 481, 607]]
-    # labels = [f'N2 + CBD:{time}' for time in [56, 64, 99, 159, 224, 242, 332, 481, 607]]
-    # worms_dfdss = [dfd_filter(datas, notauthor=['zander'], worm=worm) for worm in worms]
-    # # jankily_make_line_plot(worms_dfdss, 'arclen', labels=labels, title="Body length (N2 + CBD)", ylabel='mm', colors=hsv_cmap(len(worms), *COLOR_N2OIL_HS).colors)
-    # # jankily_make_line_plot(worms_dfdss, 'ellipse_ecentricity', labels=labels, title="Ellipse ecentricity (N2 + CBD)", ylabel='(unitless, 0-1)', colors=hsv_cmap(len(worms), *COLOR_N2OIL_HS).colors)
-    # # jankily_make_line_plot(worms_dfdss, 'heading', labels=labels, title="Heading (N2 + CBD)", ylabel='degrees', colors=hsv_cmap(len(worms), *COLOR_N2OIL_HS).colors)
-    # jankily_make_line_plot(worms_dfdss, 'v0', labels=labels, title="Centroid velocity (N2 + CBD)", ylabel='mm/frame', colors=hsv_cmap(len(worms), *COLOR_N2OIL_HS).colors)
-
-    # N2 vs N2 + CB1338
-    # worms =  [f'LA.ALS.3.25.22.#2.mp4:{time}' for time in [70, 222, 309]] + [f'AL.ALS.3.25.22.#6.mp4:{time}' for time in [56, 64, 99]]
-    # labels = [f'N2:{time}' for time in [70, 22, 309]] + [f'N2 + CBD:{time}' for time in [56, 64, 99]]
-    # colors = list(hsv_cmap(3, *COLOR_N2_HS).colors) + list(hsv_cmap(3, *COLOR_N2OIL_HS).colors)
-    # print(colors)
-    # worms_dfdss = [dfd_filter(datas, notauthor=['zander'], worm=worm) for worm in worms]
-    # # jankily_make_line_plot(worms_dfdss, 'arclen', labels=labels, title="Body length (N2 + CBD  vs  N2)", ylabel='mm', colors=colors)
-    # # jankily_make_line_plot(worms_dfdss, 'ellipse_ecentricity', labels=labels, title="Ellipse ecenctricity (N2 + CBD  vs  N2)", ylabel='(unitless, 0-1)', colors=colors)
-    # # jankily_make_line_plot(worms_dfdss, 'heading', labels=labels, title="Heading (N2 + CBD  vs  N2)", ylabel='degrees', colors=colors)
-    # jankily_make_line_plot(worms_dfdss, 'v0', labels=labels, title="Centroid velocity (N2 + CBD  vs  N2)", ylabel='mm/frame', colors=colors)
-
-
-    # all worms in the strain
-    # strains, colors = ['N2', 'N2+CBD', 'CB'], [COLOR_N2, COLOR_AM, COLOR_CB]
-    # strains, colors = ['N2', 'N2+CBD'], [COLOR_N2, COLOR_N2OIL]
-    # strains, colors = ['N2', 'AM+CBD'], [COLOR_N2, COLOR_AMOIL]
-    strains, colors = ['N2', 'AM', 'AM+CBD', 'CB'], [COLOR_N2, COLOR_AM, COLOR_AMOIL, COLOR_CB]
-    data_in_strains = [dfd_filter(datas, notauthor=['zander'], strain=strain) for strain in strains]
-    print([len(x) for x in data_in_strains])
-    data_in_strains = jankily_collate_by_worm(data_in_strains)
+    worms_dfdss = [dfd_filter(datas, notauthor=['zander'], worm=worm) for worm in worms]
+    print(len(worms_dfdss), [len(x) for x in worms_dfdss])
 
     metric_id = ['arclen', 'ellipse_ecentricity', 'heading', 'v0']
     metric_display = ['Body length', 'Ellipse eccentricity', 'Heading', 'Centroid speed']
     metric_units = ['mm', '(unitless, 0-1)', 'degrees', 'mm/frame']
     for id, display, units in zip(metric_id, metric_display, metric_units):
-        jankily_make_line_plot(data_in_strains, id, labels=strains, title=f"{display} by strain", ylabel=units, colors=colors)
+        jankily_make_line_plot(worms_dfdss, id, labels=labels, title=f"{display} ({' vs '.join(strains)})", ylabel=units, colors=colors)
         plt.savefig(f"out/{','.join(strains)}-{id}.png", dpi=300)
         # input('press enter to continue')
+
+    # # all worms in the strain
+    # # strains, colors = ['N2', 'N2+CBD', 'CB'], [COLOR_N2, COLOR_AM, COLOR_CB]
+    # # strains, colors = ['N2', 'N2+CBD'], [COLOR_N2, COLOR_N2OIL]
+    # # strains, colors = ['N2', 'AM+CBD'], [COLOR_N2, COLOR_AMOIL]
+    # strains, colors = ['N2', 'AM', 'AM+CBD', 'CB'], [COLOR_N2, COLOR_AM, COLOR_AMOIL, COLOR_CB]
+    # data_in_strains = [dfd_filter(datas, notauthor=['zander'], strain=strain) for strain in strains]
+    # print([len(x) for x in data_in_strains])
+    # data_in_strains = jankily_collate_by_worm(data_in_strains)
+    #
+    # metric_id = ['arclen', 'ellipse_ecentricity', 'heading', 'v0']
+    # metric_display = ['Body length', 'Ellipse eccentricity', 'Heading', 'Centroid speed']
+    # metric_units = ['mm', '(unitless, 0-1)', 'degrees', 'mm/frame']
+    # for id, display, units in zip(metric_id, metric_display, metric_units):
+    #     jankily_make_line_plot(data_in_strains, id, labels=strains, title=f"{display} by strain", ylabel=units, colors=colors)
+    #     plt.savefig(f"out/{','.join(strains)}-{id}.png", dpi=300)
+    #     # input('press enter to continue')
 
     # show data distribution
     # print([(dfd['author'], dfd['df']) for dfd in datas_n2])
