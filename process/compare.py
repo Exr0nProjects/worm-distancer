@@ -44,7 +44,7 @@ def hsv_cmap(num_steps, h, s, modulate_opacity=False):
 
 # cmaps = ['Blues', 'Greens', 'Reds']*4
 # cmaps = ['summer', 'cool', 'winter']*4
-cmaps = [hsv_cmap(256, x, 0.7) for x in np.linspace(0.4, 0.9, 4)] * 10
+cmaps = [hsv_cmap(256, x, 0.7) for x in np.linspace(0.4, 0.9, 3)]
 # cmaps = [hsv_cmap(256, 0.5908 + x/20, 0.6022) for x in range(-3, 4)]
 
 contrast_colors = [ (230, 25, 75), (60, 180, 75), (255, 225, 25), (0, 130, 200), (245, 130, 48), (145, 30, 180), (70, 240, 240), (240, 50, 230), (210, 245, 60), (250, 190, 212), (0, 128, 128), (220, 190, 255), (170, 110, 40), (255, 250, 200), (128, 0, 0), (170, 255, 195), (128, 128, 0), (255, 215, 180), (0, 0, 128), (128, 128, 128) ] # https://sashamaps.net/docs/resources/20-colors/
@@ -329,38 +329,43 @@ def dfd_filter(datas, author=None, notauthor=None, strain=None, worm=None):
     return [x for x in datas if pred(x)]
 
 if __name__ == '__main__':
-#     datas = [dfd for fname in glob('2022_L1_locomotion_assay/3-25-22/*.tsv') for dfd in jankily_read_combined_data(fname)]
+    datas = [dfd for fname in glob('2022_L1_locomotion_assay/3-25-22/*.tsv') for dfd in jankily_read_combined_data(fname)]
+
+##
+##     for dfd in datas:
+##         print(f"processing {dfd['author']} {dfd['video']}")
+##         calc_metrics(dfd['df'], dfd['scale'])
+##
+    datas = [{ **dfd, 'df': calc_metrics(dfd['df'], dfd['scale']) } for dfd in tqdm(datas, desc="calculating metrics...")]
 #
-# #
-# #     for dfd in datas:
-# #         print(f"processing {dfd['author']} {dfd['video']}")
-# #         calc_metrics(dfd['df'], dfd['scale'])
-# #
-#     datas = [{ **dfd, 'df': calc_metrics(dfd['df'], dfd['scale']) } for dfd in tqdm(datas, desc="calculating metrics...")]
-#
-#     with open('all_data_procced.pickle', 'wb') as wf:
-#         pickle.dump(datas, wf)
+#    with open('all_data_procced.pickle', 'wb') as wf:
+#        pickle.dump(datas, wf)
 
-    with open('all_data_procced.pickle', 'rb') as rf:
-        datas = pickle.load(rf)
+#    with open('all_data_procced.pickle', 'rb') as rf:
+#        datas = pickle.load(rf)
 
-    # POSTER TODO: realign headings; how to collate multiple worms of the same strain
 
-    # comparing indivudal worms, possibly across strains
-    # worms, labels, colors, strains = [f'AL.ALS.3.25.22.#6.mp4:{time}' for time in [56, 64, 99, 159, 224, 242, 332, 481, 607]], [f'N2+CBD:{time}' for time in [56, 64, 99, 159, 224, 242, 332, 481, 607]], hsv_cmap(9, *COLOR_N2OIL_HS).colors, ['N2+CBD']   # all of the N2+CBDs
-    # worms, labels, colors, strains = [f'LA.ALS.3.25.22.#2.mp4:{time}' for time in [70, 222, 309]] + [f'AL.ALS.3.25.22.#6.mp4:{time}' for time in [56, 64, 99]], [f'N2:{time}' for time in [70, 22, 309]] + [f'N2+CBD:{time}' for time in [56, 64, 99]], list(hsv_cmap(3, *COLOR_N2_HS).colors) + list(hsv_cmap(3, *COLOR_N2OIL_HS).colors), ['N2', 'N2+CBD']  # N2 vs N2 + CBD individuals
-    worms, labels, colors, strains = [f'LA.ALS.3.25.22.#3.mp4:{time}' for time in [51, 85, 200, 290]] + [f'LA.ALS.3.25.22.#7.mp4:{time}' for time in [20, 85, 245, 358]], [f'AM:{time}' for time in [51, 85, 200, 290]] + [f'AM+CBD:{time}' for time in [20, 85, 245, 358]], list(hsv_cmap(4, *COLOR_AM_HS).colors) + list(hsv_cmap(4, *COLOR_AMOIL_HS).colors), ['AM', 'AM+CBD']  # AM vs AM + CBD individuals
+    datas = dfd_filter(datas, worm='LA.ALS.3.25.22.#1.mp4:90')
+    plot_3d_by_point(datas)
 
-    worms_dfdss = [dfd_filter(datas, notauthor=['zander'], worm=worm) for worm in worms]
-    print(len(worms_dfdss), [len(x) for x in worms_dfdss])
 
-    metric_id = ['arclen', 'ellipse_ecentricity', 'heading', 'v0']
-    metric_display = ['Body length', 'Ellipse eccentricity', 'Heading', 'Centroid speed']
-    metric_units = ['mm', '(unitless, 0-1)', 'degrees', 'mm/frame']
-    for id, display, units in zip(metric_id, metric_display, metric_units):
-        jankily_make_line_plot(worms_dfdss, id, labels=labels, title=f"{display} ({' vs '.join(strains)})", ylabel=units, colors=colors)
-        plt.savefig(f"out/{','.join(strains)}-{id}.png", dpi=300)
-        # input('press enter to continue')
+    # # POSTER TODO: realign headings; how to collate multiple worms of the same strain
+
+    # # comparing indivudal worms, possibly across strains
+    # # worms, labels, colors, strains = [f'AL.ALS.3.25.22.#6.mp4:{time}' for time in [56, 64, 99, 159, 224, 242, 332, 481, 607]], [f'N2+CBD:{time}' for time in [56, 64, 99, 159, 224, 242, 332, 481, 607]], hsv_cmap(9, *COLOR_N2OIL_HS).colors, ['N2+CBD']   # all of the N2+CBDs
+    # # worms, labels, colors, strains = [f'LA.ALS.3.25.22.#2.mp4:{time}' for time in [70, 222, 309]] + [f'AL.ALS.3.25.22.#6.mp4:{time}' for time in [56, 64, 99]], [f'N2:{time}' for time in [70, 22, 309]] + [f'N2+CBD:{time}' for time in [56, 64, 99]], list(hsv_cmap(3, *COLOR_N2_HS).colors) + list(hsv_cmap(3, *COLOR_N2OIL_HS).colors), ['N2', 'N2+CBD']  # N2 vs N2 + CBD individuals
+    # worms, labels, colors, strains = [f'LA.ALS.3.25.22.#3.mp4:{time}' for time in [51, 85, 200, 290]] + [f'LA.ALS.3.25.22.#7.mp4:{time}' for time in [20, 85, 245, 358]], [f'AM:{time}' for time in [51, 85, 200, 290]] + [f'AM+CBD:{time}' for time in [20, 85, 245, 358]], list(hsv_cmap(4, *COLOR_AM_HS).colors) + list(hsv_cmap(4, *COLOR_AMOIL_HS).colors), ['AM', 'AM+CBD']  # AM vs AM + CBD individuals
+
+    # worms_dfdss = [dfd_filter(datas, notauthor=['zander'], worm=worm) for worm in worms]
+    # print(len(worms_dfdss), [len(x) for x in worms_dfdss])
+
+    # metric_id = ['arclen', 'ellipse_ecentricity', 'heading', 'v0']
+    # metric_display = ['Body length', 'Ellipse eccentricity', 'Heading', 'Centroid speed']
+    # metric_units = ['mm', '(unitless, 0-1)', 'degrees', 'mm/frame']
+    # for id, display, units in zip(metric_id, metric_display, metric_units):
+    #     jankily_make_line_plot(worms_dfdss, id, labels=labels, title=f"{display} ({' vs '.join(strains)})", ylabel=units, colors=colors)
+    #     plt.savefig(f"out/{','.join(strains)}-{id}.png", dpi=300)
+    #     # input('press enter to continue')
 
     # # all worms in the strain
     # # strains, colors = ['N2', 'N2+CBD', 'CB'], [COLOR_N2, COLOR_AM, COLOR_CB]
